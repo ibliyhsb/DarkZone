@@ -26,7 +26,7 @@ fun LoginScreen(
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Text(
-				text = "Login",
+				text = "DarkZone",
 				style = MaterialTheme.typography.headlineSmall
 			)
 			Text(

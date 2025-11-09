@@ -2,13 +2,24 @@ package cl.duoc.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
+import cl.duoc.app.ui.screen.BlogScreen
+import cl.duoc.app.ui.screen.FavoritiesScreen
 import cl.duoc.app.ui.screen.FormularioServicioScreen
+import cl.duoc.app.ui.screen.HistoryScreen
+import cl.duoc.app.ui.screen.ContactScreen
 import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +29,10 @@ object Routes {
     const val Login = "login"
     const val Start = "start"
     const val Form = "form"
+    const val History = "historias"
+    const val Blogs = "blogs"
+    const val Favorites = "favoritos"
+    const val Contact = "contacto"
 }
 
 @Composable
@@ -61,6 +76,46 @@ fun NavBar() {
                     FormularioServicioScreen()
                 }
             }
+            composable(Routes.History) {
+                DrawerScaffold(
+                    currentRoute = Routes.History,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    HistoryScreen()
+                }
+            }
+            composable(Routes.Blogs) {
+                DrawerScaffold(
+                    currentRoute = Routes.Blogs,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    BlogScreen()
+                }
+            }
+            composable(Routes.Favorites) {
+                DrawerScaffold(
+                    currentRoute = Routes.Favorites,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    FavoritiesScreen()
+                }
+            }
+            composable(Routes.Contact) {
+                DrawerScaffold(
+                    currentRoute = Routes.Contact,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    ContactScreen()
+                }
+            }
         }
     }
 }
@@ -75,8 +130,12 @@ private fun DrawerScaffold(
     content: @Composable () -> Unit
 ) {
     val destinations = listOf(
-        DrawerItem("Inicio", Routes.Start),
-        DrawerItem("Formulario de servicio", Routes.Form)
+        DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
+        DrawerItem("Historias", Routes.History, Icons.Default.History),
+        DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
+        DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
+        DrawerItem("Contactoñ", Routes.Contact, Icons.Default.Help),
+        DrawerItem("Formulario de servicio", Routes.Form, Icons.Default.Description)
     )
 
     ModalNavigationDrawer(
@@ -90,6 +149,7 @@ private fun DrawerScaffold(
                 )
                 destinations.forEach { item ->
                     NavigationDrawerItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
                         selected = currentRoute == item.route,
                         onClick = {
@@ -123,11 +183,15 @@ private fun DrawerScaffold(
     }
 }
 
-private data class DrawerItem(val label: String, val route: String)
+private data class DrawerItem(val label: String, val route: String, val icon: ImageVector)
 
 @Composable
 private fun appBarTitle(route: String?): String = when (route) {
     Routes.Start -> "Inicio"
     Routes.Form  -> "Formulario de Servicio"
+    Routes.History -> "Historias"
+    Routes.Favorites -> "Favoritos"
+    Routes.Blogs -> "Blogs"
+    Routes.Contact -> "Contacto"
     else         -> ""
 }
