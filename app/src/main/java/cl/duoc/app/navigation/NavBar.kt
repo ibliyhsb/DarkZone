@@ -1,4 +1,4 @@
-package cl.duoc.app.ui
+package cl.duoc.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
 import cl.duoc.app.ui.screen.FormularioServicioScreen
 import cl.duoc.app.ui.screen.StartScreen
+import cl.duoc.app.ui.screen.LoginScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -20,7 +21,7 @@ object Routes {
 }
 
 @Composable
-fun AppNav() {
+fun NavBar() {
     val nav = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -31,7 +32,7 @@ fun AppNav() {
             LoginScreen(
                 onAuthenticated = {
                     nav.navigate(Routes.Start) {
-                        popUpTo(Routes.Login) { inclusive = true } // limpia login del back stack
+                        popUpTo(Routes.Login) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
