@@ -13,7 +13,7 @@ import cl.duoc.app.model.data.entities.FormularioUsuarioEntity
 
 @Database(
     entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class],
-    version = 4, // Incremented version from 3 to 4
+    version = 5, // Incremented version from 4 to 5
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,6 +35,41 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // Migration from version 4 to 5 - Remove foreign key constraint
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create a new table without the foreign key constraint
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS formulario_blog_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        titulo TEXT NOT NULL,
+                        descripcion TEXT NOT NULL DEFAULT '',
+                        contenido TEXT NOT NULL,
+                        usuario_autor TEXT NOT NULL,
+                        fechaPublicacion TEXT NOT NULL,
+                        esPublicado INTEGER NOT NULL DEFAULT 0,
+                        imagenUri TEXT
+                    )
+                """.trimIndent())
+                
+                // Copy data from old table to new table
+                database.execSQL("""
+                    INSERT INTO formulario_blog_new (id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri)
+                    SELECT id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri
+                    FROM formulario_blog
+                """.trimIndent())
+                
+                // Drop the old table
+                database.execSQL("DROP TABLE formulario_blog")
+                
+                // Rename the new table to the old table name
+                database.execSQL("ALTER TABLE formulario_blog_new RENAME TO formulario_blog")
+                
+                // Recreate the index
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_formulario_blog_usuario_autor ON formulario_blog(usuario_autor)")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -42,7 +77,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_db"
                 )
-                    .addMigrations(MIGRATION_3_4) // Add the migration
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5) // Add all migrations
                     .build()
                 INSTANCE = instance
                 instance

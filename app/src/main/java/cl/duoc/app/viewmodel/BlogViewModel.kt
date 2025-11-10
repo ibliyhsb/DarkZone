@@ -20,7 +20,13 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
 
     init {
         viewModelScope.launch {
-            repo.getBlogs().collectLatest { list -> _blogs.value = list }
+            try {
+                repo.getBlogs().collectLatest { list -> _blogs.value = list }
+            } catch (e: Exception) {
+                // Log the error or handle it appropriately
+                e.printStackTrace()
+                _blogs.value = emptyList()
+            }
         }
     }
 
