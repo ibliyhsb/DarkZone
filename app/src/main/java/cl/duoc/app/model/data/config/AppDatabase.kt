@@ -4,18 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import cl.duoc.app.model.data.dao.FormularioBlogsDao
+import cl.duoc.app.model.data.dao.FormularioComentariosDao
 import cl.duoc.app.model.data.dao.FormularioUsuarioDao
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
+import cl.duoc.app.model.data.entities.FormularioComentariosEntity
 import cl.duoc.app.model.data.entities.FormularioUsuarioEntity
 
 @Database(
-    entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class],
-    version = 2,
+    entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class, FormularioComentariosEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun formularioUsuarioDao(): FormularioUsuarioDao
+    abstract fun formularioBlogsDao(): FormularioBlogsDao
+    abstract fun formularioComentariosDao(): FormularioComentariosDao
 
     companion object {
         @Volatile
