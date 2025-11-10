@@ -1,6 +1,5 @@
 package cl.duoc.app.viewmodel
 
-import android.database.sqlite.SQLiteConstraintException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
@@ -10,8 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class BlogViewModel(private val repo: FormularioBlogsRepository, private val usuarioActual: String) : ViewModel() {
 
@@ -38,7 +38,8 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     ) {
         viewModelScope.launch {
             try {
-                val fecha = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val fecha = dateFormat.format(Date())
                 repo.insertarBlog(
                     FormularioBlogsEntity(
                         titulo = titulo,
@@ -50,9 +51,10 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                         imagenUri = imagenUri
                     )
                 )
-            } catch (e: SQLiteConstraintException) {
-                // Manejar la excepción, por ejemplo, mostrando un mensaje al usuario.
-                // Por ahora, simplemente la ignoramos para que no se caiga la app.
+            } catch (e: Exception) {
+                // Captura cualquier excepción para evitar que la app se cierre
+                e.printStackTrace()
+                // Aquí podrías agregar un StateFlow para mostrar mensajes de error al usuario
             }
         }
     }
