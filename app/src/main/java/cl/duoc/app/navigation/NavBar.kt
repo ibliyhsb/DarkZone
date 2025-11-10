@@ -2,30 +2,22 @@ package cl.duoc.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Newspaper
-import androidx.compose.material.icons.filled.Stars
-import androidx.compose.material.icons.filled.SupervisedUserCircle
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
 import androidx.navigation.compose.*
-import cl.duoc.app.ui.screen.BlogScreen
-import cl.duoc.app.ui.screen.FavoritiesScreen
-import cl.duoc.app.ui.screen.FormularioServicioScreen
-import cl.duoc.app.ui.screen.HistoryScreen
-import cl.duoc.app.ui.screen.ContactScreen
-import cl.duoc.app.ui.screen.StartScreen
-import cl.duoc.app.ui.screen.LoginScreen
-import cl.duoc.app.ui.screen.ProfileScreen
-import cl.duoc.app.ui.screen.NewsScreen
+import cl.duoc.app.model.data.config.AppDatabase
+import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import cl.duoc.app.ui.screen.*
+import cl.duoc.app.viewmodel.BlogViewModel
+import cl.duoc.app.viewmodel.BlogViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -35,6 +27,7 @@ object Routes {
     const val Form = "form"
     const val History = "historias"
     const val Blogs = "blogs"
+    const val BlogCreate = "blog_create"
     const val Favorites = "favoritos"
     const val Contact = "contacto"
     const val Profile = "perfil"
@@ -48,11 +41,10 @@ fun NavBar() {
     val scope = rememberCoroutineScope()
 
     NavHost(navController = nav, startDestination = Routes.Login) {
-        // LOGIN
         composable(Routes.Login) {
             LoginScreen(
                 onAuthenticated = {
-                    nav.navigate(Routes.Start) {
+                    nav.navigate("main_shell") { // Navigate to the nested graph
                         popUpTo(Routes.Login) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -60,8 +52,7 @@ fun NavBar() {
             )
         }
 
-        // SHELL (drawer + scaffold)
-        navigation(startDestination = Routes.Start, route = "main_shell") {
+        navigation(startDestination = Routes.Start, route = "main_shell") { 
             composable(Routes.Start) {
                 DrawerScaffold(
                     currentRoute = Routes.Start,
@@ -92,16 +83,30 @@ fun NavBar() {
                     HistoryScreen()
                 }
             }
+
             composable(Routes.Blogs) {
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
                 DrawerScaffold(
                     currentRoute = Routes.Blogs,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
                     scope = scope
                 ) {
-                    BlogScreen()
+                    BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
                 }
             }
+            composable(Routes.BlogCreate) {
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
+                DrawerScaffold(
+                    currentRoute = Routes.BlogCreate,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    BlogCreateScreen(viewModel = blogVm, onSaved = { nav.popBackStack() })
+                }
+            }
+
             composable(Routes.Profile) {
                 DrawerScaffold(
                     currentRoute = Routes.Profile,
@@ -144,6 +149,16 @@ fun NavBar() {
             }
         }
     }
+}
+
+@Composable
+private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavController): BlogViewModel {
+    val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
+    val context = LocalContext.current
+    val db = remember(context) { AppDatabase.getDatabase(context) }
+    val repo = remember(db) { FormularioBlogsRepository(db.formularioBlogsDao()) }
+    val factory = remember(repo) { BlogViewModelFactory(repo, usuarioActual = "usuario_demo") }
+    return viewModel(viewModelStoreOwner = parentEntry, factory = factory)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -216,12 +231,13 @@ private data class DrawerItem(val label: String, val route: String, val icon: Im
 @Composable
 private fun appBarTitle(route: String?): String = when (route) {
     Routes.Start -> "Inicio"
-    Routes.Form  -> "Formulario de Servicio"
+    Routes.Form -> "Formulario de Servicio"
     Routes.History -> "Historias"
     Routes.Favorites -> "Favoritos"
     Routes.Profile -> "Perfil"
     Routes.Blogs -> "Blogs"
+    Routes.BlogCreate -> "Crear Blog"
     Routes.Contact -> "Contacto"
     Routes.News -> "Noticias"
-    else         -> ""
+    else -> ""
 }

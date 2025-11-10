@@ -23,9 +23,12 @@ data class FormularioBlogsEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val titulo: String,
+    val descripcion: String = "",
     val contenido: String,
     @ColumnInfo(name = "usuario_autor")
     val usuarioAutor: String,
     val fechaPublicacion: String,
-    val esPublicado: Boolean = false
+    val esPublicado: Boolean = false,
+    // URI (String) de imagen opcional seleccionada del dispositivo
+    val imagenUri: String? = null
 )
