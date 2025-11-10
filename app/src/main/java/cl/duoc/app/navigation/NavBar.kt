@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ import cl.duoc.app.ui.screen.ContactScreen
 import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
 import cl.duoc.app.ui.screen.ProfileScreen
+import cl.duoc.app.ui.screen.NewsScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -36,6 +38,7 @@ object Routes {
     const val Favorites = "favoritos"
     const val Contact = "contacto"
     const val Profile = "perfil"
+    const val News = "noticias"
 }
 
 @Composable
@@ -129,6 +132,16 @@ fun NavBar() {
                     ContactScreen()
                 }
             }
+            composable(Routes.News) {
+                DrawerScaffold(
+                    currentRoute = Routes.News,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    NewsScreen()
+                }
+            }
         }
     }
 }
@@ -149,6 +162,7 @@ private fun DrawerScaffold(
         DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
         DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
         DrawerItem("Contacto", Routes.Contact, Icons.Default.Help),
+        DrawerItem("Noticias", Routes.News, Icons.Default.Newspaper),
         DrawerItem("Formulario de servicio", Routes.Form, Icons.Default.Description)
     )
 
@@ -208,5 +222,6 @@ private fun appBarTitle(route: String?): String = when (route) {
     Routes.Profile -> "Perfil"
     Routes.Blogs -> "Blogs"
     Routes.Contact -> "Contacto"
+    Routes.News -> "Noticias"
     else         -> ""
 }
