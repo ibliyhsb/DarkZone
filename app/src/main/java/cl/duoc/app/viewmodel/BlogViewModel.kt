@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,9 +55,11 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
         viewModelScope.launch {
             try {
                 repo.getBlogs().collectLatest { list ->
+                    Log.d("BlogViewModel", "getBlogs emitted size=${list.size} ids=${list.map { it.id }}")
                     if (list.isEmpty()) {
                         // Si la DB está vacía, mostrar ejemplos en memoria
                         _blogs.value = sampleBlogs()
+                        Log.d("BlogViewModel", "Using sample blogs: ${_blogs.value.map { it.id }}")
                     } else {
                         _blogs.value = list
                     }
@@ -98,7 +101,7 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val fecha = dateFormat.format(Date())
-                repo.insertarBlog(
+                val newId = repo.insertarBlog(
                     FormularioBlogsEntity(
                         titulo = titulo,
                         descripcion = descripcion,
@@ -109,6 +112,12 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                         imagenUri = imagenUri
                     )
                 )
+                Log.d("BlogViewModel", "Inserted blog id=$newId titulo=$titulo")
+                // Intentar cargar inmediatamente el blog insertado y añadirlo al inicio de la lista
+                val inserted = repo.getBlogById(newId)
+                inserted?.let {
+                    _blogs.value = listOf(it) + _blogs.value.filter { b -> b.id != it.id }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
