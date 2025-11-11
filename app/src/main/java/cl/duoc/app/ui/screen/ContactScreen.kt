@@ -8,9 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun FormularioServicioScreen() {
-	Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-		Text("Formulario de Servicio")
-	}
+fun ContactScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Toma contacto con nosotros")
+    }
 }
-

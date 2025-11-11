@@ -1,15 +1,31 @@
-package cl.duoc.app.ui
+package cl.duoc.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Newspaper
+import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
+import cl.duoc.app.ui.screen.BlogScreen
+import cl.duoc.app.ui.screen.FavoritiesScreen
 import cl.duoc.app.ui.screen.FormularioServicioScreen
+import cl.duoc.app.ui.screen.HistoryScreen
+import cl.duoc.app.ui.screen.ContactScreen
 import cl.duoc.app.ui.screen.StartScreen
+import cl.duoc.app.ui.screen.LoginScreen
+import cl.duoc.app.ui.screen.ProfileScreen
+import cl.duoc.app.ui.screen.NewsScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -17,10 +33,16 @@ object Routes {
     const val Login = "login"
     const val Start = "start"
     const val Form = "form"
+    const val History = "historias"
+    const val Blogs = "blogs"
+    const val Favorites = "favoritos"
+    const val Contact = "contacto"
+    const val Profile = "perfil"
+    const val News = "noticias"
 }
 
 @Composable
-fun AppNav() {
+fun NavBar() {
     val nav = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -31,7 +53,7 @@ fun AppNav() {
             LoginScreen(
                 onAuthenticated = {
                     nav.navigate(Routes.Start) {
-                        popUpTo(Routes.Login) { inclusive = true } // limpia login del back stack
+                        popUpTo(Routes.Login) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -60,6 +82,66 @@ fun AppNav() {
                     FormularioServicioScreen()
                 }
             }
+            composable(Routes.History) {
+                DrawerScaffold(
+                    currentRoute = Routes.History,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    HistoryScreen()
+                }
+            }
+            composable(Routes.Blogs) {
+                DrawerScaffold(
+                    currentRoute = Routes.Blogs,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    BlogScreen()
+                }
+            }
+            composable(Routes.Profile) {
+                DrawerScaffold(
+                    currentRoute = Routes.Profile,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    ProfileScreen()
+                }
+            }
+            composable(Routes.Favorites) {
+                DrawerScaffold(
+                    currentRoute = Routes.Favorites,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    FavoritiesScreen()
+                }
+            }
+            composable(Routes.Contact) {
+                DrawerScaffold(
+                    currentRoute = Routes.Contact,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    ContactScreen()
+                }
+            }
+            composable(Routes.News) {
+                DrawerScaffold(
+                    currentRoute = Routes.News,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    NewsScreen()
+                }
+            }
         }
     }
 }
@@ -74,8 +156,14 @@ private fun DrawerScaffold(
     content: @Composable () -> Unit
 ) {
     val destinations = listOf(
-        DrawerItem("Inicio", Routes.Start),
-        DrawerItem("Formulario de servicio", Routes.Form)
+        DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
+        DrawerItem("Historias", Routes.History, Icons.Default.History),
+        DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
+        DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
+        DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
+        DrawerItem("Contacto", Routes.Contact, Icons.Default.Help),
+        DrawerItem("Noticias", Routes.News, Icons.Default.Newspaper),
+        DrawerItem("Formulario de servicio", Routes.Form, Icons.Default.Description)
     )
 
     ModalNavigationDrawer(
@@ -89,6 +177,7 @@ private fun DrawerScaffold(
                 )
                 destinations.forEach { item ->
                     NavigationDrawerItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
                         selected = currentRoute == item.route,
                         onClick = {
@@ -122,11 +211,17 @@ private fun DrawerScaffold(
     }
 }
 
-private data class DrawerItem(val label: String, val route: String)
+private data class DrawerItem(val label: String, val route: String, val icon: ImageVector)
 
 @Composable
 private fun appBarTitle(route: String?): String = when (route) {
     Routes.Start -> "Inicio"
     Routes.Form  -> "Formulario de Servicio"
+    Routes.History -> "Historias"
+    Routes.Favorites -> "Favoritos"
+    Routes.Profile -> "Perfil"
+    Routes.Blogs -> "Blogs"
+    Routes.Contact -> "Contacto"
+    Routes.News -> "Noticias"
     else         -> ""
 }
