@@ -13,6 +13,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import cl.duoc.app.model.data.config.AppDatabase
+import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import cl.duoc.app.ui.screen.BlogCreateScreen
 import cl.duoc.app.ui.screen.BlogScreen
 import cl.duoc.app.ui.screen.FavoritiesScreen
 import cl.duoc.app.ui.screen.FormularioServicioScreen
@@ -23,6 +26,9 @@ import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
 import cl.duoc.app.ui.screen.ProfileScreen
 import cl.duoc.app.ui.screen.NewsScreen
+import cl.duoc.app.ui.screen.RecentBlogsScreen
+import cl.duoc.app.viewmodel.BlogViewModel
+import cl.duoc.app.viewmodel.BlogViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -61,6 +67,9 @@ fun NavBar() {
                         // borra la pila de navegación
                         popUpTo(0)
                     }
+                },
+                onNavigateToRegistro = {
+                    nav.navigate(Routes.Registro)
                 }
             )
         }
@@ -233,7 +242,7 @@ private fun DrawerScaffold(
     ) {
         Scaffold(
             topBar = {
-                SmallTopAppBar(
+                TopAppBar(
                     title = { Text(appBarTitle(currentRoute)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
