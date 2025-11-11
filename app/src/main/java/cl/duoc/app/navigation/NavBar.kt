@@ -32,6 +32,7 @@ object Routes {
     const val Contact = "contacto"
     const val Profile = "perfil"
     const val News = "noticias"
+    const val RecentBlogs = "recent_blogs" // Added route
 }
 
 @Composable
@@ -147,6 +148,16 @@ fun NavBar() {
                     NewsScreen()
                 }
             }
+            composable(Routes.RecentBlogs) { // Added composable
+                DrawerScaffold(
+                    currentRoute = Routes.RecentBlogs,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    RecentBlogsScreen()
+                }
+            }
         }
     }
 }
@@ -174,6 +185,7 @@ private fun DrawerScaffold(
         DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
         DrawerItem("Historias", Routes.History, Icons.Default.History),
         DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
+        DrawerItem("Blogs Recientes", Routes.RecentBlogs, Icons.Default.History), // Added item
         DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
         DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
         DrawerItem("Contacto", Routes.Contact, Icons.Default.Help),
@@ -239,5 +251,6 @@ private fun appBarTitle(route: String?): String = when (route) {
     Routes.BlogCreate -> "Crear Blog"
     Routes.Contact -> "Contacto"
     Routes.News -> "Noticias"
+    Routes.RecentBlogs -> "Blogs Recientes"
     else -> ""
 }
