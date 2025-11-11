@@ -13,16 +13,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
-import cl.duoc.app.model.data.config.AppDatabase
-import cl.duoc.app.model.data.repository.FormularioBlogsRepository
-import cl.duoc.app.ui.screen.*
-import cl.duoc.app.viewmodel.BlogViewModel
-import cl.duoc.app.viewmodel.BlogViewModelFactory
+import cl.duoc.app.ui.screen.BlogScreen
+import cl.duoc.app.ui.screen.FavoritiesScreen
+import cl.duoc.app.ui.screen.FormularioServicioScreen
+import cl.duoc.app.ui.screen.HistoryScreen
+import cl.duoc.app.ui.screen.ContactScreen
+import cl.duoc.app.ui.screen.FormularioRegistroScreen
+import cl.duoc.app.ui.screen.StartScreen
+import cl.duoc.app.ui.screen.LoginScreen
+import cl.duoc.app.ui.screen.ProfileScreen
+import cl.duoc.app.ui.screen.NewsScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object Routes {
     const val Login = "login"
+    const val Registro = "registro"
     const val Start = "start"
     const val Form = "form"
     const val History = "historias"
@@ -41,19 +47,25 @@ fun NavBar() {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    NavHost(navController = nav, startDestination = Routes.Login) {
+    NavHost(navController = nav, startDestination = Routes.Registro) {
+        composable(Routes.Registro) {
+            FormularioRegistroScreen(onNavigateToLogin = {
+                nav.navigate(Routes.Login)
+            })
+        }
+
         composable(Routes.Login) {
             LoginScreen(
                 onAuthenticated = {
-                    nav.navigate("main_shell") { // Navigate to the nested graph
-                        popUpTo(Routes.Login) { inclusive = true }
-                        launchSingleTop = true
+                    nav.navigate("main_shell") {
+                        // borra la pila de navegación
+                        popUpTo(0)
                     }
                 }
             )
         }
 
-        navigation(startDestination = Routes.Start, route = "main_shell") { 
+        navigation(startDestination = Routes.Start, route = "main_shell") {
             composable(Routes.Start) {
                 DrawerScaffold(
                     currentRoute = Routes.Start,
