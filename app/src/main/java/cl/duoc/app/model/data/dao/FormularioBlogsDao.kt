@@ -21,9 +21,9 @@ interface FormularioBlogsDao {
     @Delete
     suspend fun deleteBlog(blog: FormularioBlogsEntity)
 
-    @Query("SELECT * FROM formulario_blog ORDER BY fechaPublicacion DESC")
+    @Query("SELECT id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri FROM formulario_blog ORDER BY fechaPublicacion DESC")
     fun getBlogs(): Flow<List<FormularioBlogsEntity>>
 
-    @Query("SELECT * FROM formulario_blog WHERE id = :id")
+    @Query("SELECT id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri FROM formulario_blog WHERE id = :id")
     suspend fun getBlogById(id: Long): FormularioBlogsEntity?
 }
