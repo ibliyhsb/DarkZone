@@ -2,6 +2,7 @@ package cl.duoc.app.ui.screen
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,8 +16,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -24,14 +25,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
+import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.viewmodel.BlogViewModel
 
 @Composable
 fun BlogScreen(
     viewModel: BlogViewModel,
-    onNewBlog: () -> Unit
+    onNewBlog: () -> Unit,
+    onBlogClicked: (Long) -> Unit
 ) {
-    val blogs by viewModel.blogs.collectAsState()
+    val blogs: List<FormularioBlogsEntity> by viewModel.blogs.collectAsState(initial = emptyList())
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onNewBlog) {
@@ -54,11 +57,12 @@ fun BlogScreen(
                 items(blogs) { blog ->
                     Card(
                         colors = CardDefaults.cardColors(),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth().clickable { onBlogClicked(blog.id) }
                     ) {
                         Column(Modifier.padding(16.dp)) {
                             if (!blog.imagenUri.isNullOrBlank()) {
-                                val uri: Uri = blog.imagenUri.toUri()
+                                val uri: Uri = blog.imagenUri!!.toUri()
                                 Image(
                                     painter = rememberAsyncImagePainter(uri),
                                     contentDescription = blog.titulo,
