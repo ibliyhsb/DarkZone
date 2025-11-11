@@ -42,7 +42,7 @@ class RegistroViewModel(private val registroRepository: FormularioUsuarioReposit
         }
     }
 
-    fun onContrasenaChange(valor: String) {
+    fun onPasswordChange(valor: String) {
         _estado.update { actual ->
             actual.copy(
                 passwordUsuario = valor,
@@ -76,21 +76,15 @@ class RegistroViewModel(private val registroRepository: FormularioUsuarioReposit
                 correoUsuario = ui.correoUsuario,
                 passwordUsuario = ui.passwordUsuario
             )
-            val mensajeError = registroRepository.guardarFormulario(entity)
-
-            if (mensajeError != null) {
-                _estado.update { actual ->
-                    actual.copy(
-                        errores = actual.errores.copy(
-                            nombreUsuario = if (mensajeError.contains("nombre de usuario")) mensajeError else null,
-                            correoUsuario = if (mensajeError.contains("correo")) mensajeError else null
-                        )
-                    )
-                }
-            } else {
-                _estado.update { RegistroUiState() }
-            }
+            registroRepository.guardarFormulario(entity)
+            
+            _estado.update { it.copy(registroExitoso = true) }
+            
         }
+    }
+
+    fun onMensajeExitosoMostrado() {
+        _estado.update { RegistroUiState() }
     }
 
     companion object{
