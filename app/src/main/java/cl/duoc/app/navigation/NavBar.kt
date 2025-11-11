@@ -12,7 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import cl.duoc.app.ui.screen.*
@@ -28,11 +30,14 @@ object Routes {
     const val History = "historias"
     const val Blogs = "blogs"
     const val BlogCreate = "blog_create"
+    const val BlogDetail = "blog_detail/{blogId}"
     const val Favorites = "favoritos"
     const val Contact = "contacto"
     const val Profile = "perfil"
     const val News = "noticias"
-    const val RecentBlogs = "recent_blogs" // Added route
+    const val RecentBlogs = "recent_blogs"
+
+    fun blogDetail(blogId: Long) = "blog_detail/$blogId"
 }
 
 @Composable
@@ -56,30 +61,30 @@ fun NavBar() {
         navigation(startDestination = Routes.Start, route = "main_shell") { 
             composable(Routes.Start) {
                 DrawerScaffold(
-                    currentRoute = Routes.Start,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     StartScreen()
                 }
             }
             composable(Routes.Form) {
                 DrawerScaffold(
-                    currentRoute = Routes.Form,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     FormularioServicioScreen()
                 }
             }
             composable(Routes.History) {
                 DrawerScaffold(
-                    currentRoute = Routes.History,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     HistoryScreen()
                 }
@@ -88,74 +93,98 @@ fun NavBar() {
             composable(Routes.Blogs) {
                 val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
                 DrawerScaffold(
-                    currentRoute = Routes.Blogs,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
-                    BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
+                    BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) }, onBlogClicked = { blogId -> nav.navigate(Routes.blogDetail(blogId)) })
                 }
             }
             composable(Routes.BlogCreate) {
                 val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
                 DrawerScaffold(
-                    currentRoute = Routes.BlogCreate,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     BlogCreateScreen(viewModel = blogVm, onSaved = { nav.popBackStack() })
+                }
+            }
+            composable(
+                route = Routes.BlogDetail,
+                arguments = listOf(navArgument("blogId") { type = NavType.LongType })
+            ) {
+                val blogId = it.arguments?.getLong("blogId")
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
+                DrawerScaffold(
+                    onNavigate = { route -> nav.navigate(route) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    BlogCreateScreen(
+                        viewModel = blogVm, 
+                        onSaved = { nav.popBackStack() }, 
+                        blogId = blogId,
+                        readOnly = true
+                    )
                 }
             }
 
             composable(Routes.Profile) {
                 DrawerScaffold(
-                    currentRoute = Routes.Profile,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     ProfileScreen()
                 }
             }
             composable(Routes.Favorites) {
                 DrawerScaffold(
-                    currentRoute = Routes.Favorites,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     FavoritiesScreen()
                 }
             }
             composable(Routes.Contact) {
                 DrawerScaffold(
-                    currentRoute = Routes.Contact,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     ContactScreen()
                 }
             }
             composable(Routes.News) {
                 DrawerScaffold(
-                    currentRoute = Routes.News,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
                     NewsScreen()
                 }
             }
-            composable(Routes.RecentBlogs) { // Added composable
+            composable(Routes.RecentBlogs) {
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
                 DrawerScaffold(
-                    currentRoute = Routes.RecentBlogs,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    navController = nav
                 ) {
-                    RecentBlogsScreen()
+                    RecentBlogsScreen(
+                        viewModel = blogVm,
+                        onBlogClicked = { blogId -> nav.navigate(Routes.blogDetail(blogId)) }
+                    )
                 }
             }
         }
@@ -175,17 +204,19 @@ private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavCo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DrawerScaffold(
-    currentRoute: String,
     onNavigate: (String) -> Unit,
     drawerState: DrawerState,
     scope: CoroutineScope,
+    navController: NavController,
     content: @Composable () -> Unit
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     val destinations = listOf(
         DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
         DrawerItem("Historias", Routes.History, Icons.Default.History),
         DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
-        DrawerItem("Blogs Recientes", Routes.RecentBlogs, Icons.Default.History), // Added item
+        DrawerItem("Blogs Recientes", Routes.RecentBlogs, Icons.Default.History),
         DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
         DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
         DrawerItem("Contacto", Routes.Contact, Icons.Default.Help),
@@ -241,16 +272,17 @@ private fun DrawerScaffold(
 private data class DrawerItem(val label: String, val route: String, val icon: ImageVector)
 
 @Composable
-private fun appBarTitle(route: String?): String = when (route) {
-    Routes.Start -> "Inicio"
-    Routes.Form -> "Formulario de Servicio"
-    Routes.History -> "Historias"
-    Routes.Favorites -> "Favoritos"
-    Routes.Profile -> "Perfil"
-    Routes.Blogs -> "Blogs"
-    Routes.BlogCreate -> "Crear Blog"
-    Routes.Contact -> "Contacto"
-    Routes.News -> "Noticias"
-    Routes.RecentBlogs -> "Blogs Recientes"
+private fun appBarTitle(route: String?): String = when {
+    route == Routes.Start -> "Inicio"
+    route == Routes.Form -> "Formulario de Servicio"
+    route == Routes.History -> "Historias"
+    route == Routes.Favorites -> "Favoritos"
+    route == Routes.Profile -> "Perfil"
+    route == Routes.Blogs -> "Blogs"
+    route == Routes.BlogCreate -> "Crear Blog"
+    route?.startsWith("blog_detail") == true -> "Detalle del Blog"
+    route == Routes.Contact -> "Contacto"
+    route == Routes.News -> "Noticias"
+    route == Routes.RecentBlogs -> "Blogs Recientes"
     else -> ""
 }

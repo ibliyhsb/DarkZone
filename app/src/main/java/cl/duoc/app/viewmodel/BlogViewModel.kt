@@ -18,6 +18,10 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     private val _blogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
     val blogs: StateFlow<List<FormularioBlogsEntity>> = _blogs.asStateFlow()
 
+    // Selected blog para edición/visualización individual
+    private val _selectedBlog = MutableStateFlow<FormularioBlogsEntity?>(null)
+    val selectedBlog: StateFlow<FormularioBlogsEntity?> = _selectedBlog.asStateFlow()
+
     init {
         viewModelScope.launch {
             try {
@@ -26,6 +30,17 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                 // Log the error or handle it appropriately
                 e.printStackTrace()
                 _blogs.value = emptyList()
+            }
+        }
+    }
+
+    fun loadBlogById(id: Long) {
+        viewModelScope.launch {
+            try {
+                _selectedBlog.value = repo.getBlogById(id)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _selectedBlog.value = null
             }
         }
     }
@@ -52,9 +67,7 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                     )
                 )
             } catch (e: Exception) {
-                // Captura cualquier excepción para evitar que la app se cierre
                 e.printStackTrace()
-                // Aquí podrías agregar un StateFlow para mostrar mensajes de error al usuario
             }
         }
     }
