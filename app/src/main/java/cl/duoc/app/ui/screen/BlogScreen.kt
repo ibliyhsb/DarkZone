@@ -58,7 +58,7 @@ fun BlogScreen(
                     Card(
                         colors = CardDefaults.cardColors(),
                         modifier = Modifier
-                            .fillMaxWidth().clickable { onBlogClicked(blog.id) }
+                            .fillMaxWidth()
                     ) {
                         Column(Modifier.padding(16.dp)) {
                             if (!blog.imagenUri.isNullOrBlank()) {
@@ -73,7 +73,14 @@ fun BlogScreen(
                                 )
                                 Spacer(Modifier.height(8.dp))
                             }
-                            Text(blog.titulo, style = MaterialTheme.typography.titleMedium)
+                            // Wrapper clickable area so we mark as viewed before navigating
+                            Column(modifier = Modifier.fillMaxWidth().clickable {
+                                // marcar como visto y navegar al detalle
+                                viewModel.markBlogAsViewed(blog.id)
+                                onBlogClicked(blog.id)
+                            }.padding(0.dp)) {
+                                Text(blog.titulo, style = MaterialTheme.typography.titleMedium)
+                            }
                             if (blog.descripcion.isNotBlank()) {
                                 Text(
                                     blog.descripcion,

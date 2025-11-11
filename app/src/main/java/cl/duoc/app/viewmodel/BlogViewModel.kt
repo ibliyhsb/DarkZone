@@ -1,76 +1,117 @@
 package cl.duoc.app.viewmodel
 
-import android.net.Uri
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-data class BlogCreateUiState(
-    val titulo: String = "",
-    val descripcion: String = "",
-    val contenido: String = "",
-    val imagenUri: String? = null
-)
+class BlogViewModel(private val repo: FormularioBlogsRepository, private val usuarioActual: String) : ViewModel() {
 
-class BlogViewModel(
-    private val repository: FormularioBlogsRepository,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+    private val _blogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
+    val blogs: StateFlow<List<FormularioBlogsEntity>> = _blogs.asStateFlow()
 
-    val blogs: StateFlow<List<FormularioBlogsEntity>> = repository.getBlogs()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    // Selected blog para edición/visualización individual
+    private val _selectedBlog = MutableStateFlow<FormularioBlogsEntity?>(null)
+    val selectedBlog: StateFlow<FormularioBlogsEntity?> = _selectedBlog.asStateFlow()
 
-    private val _blogCreateState = MutableStateFlow(BlogCreateUiState())
-    val blogCreateState = _blogCreateState.asStateFlow()
+    // Recently viewed blogs (in-memory)
+    private val _recentBlogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
+    val recentBlogs: StateFlow<List<FormularioBlogsEntity>> = _recentBlogs.asStateFlow()
 
-    private val username: StateFlow<String> = savedStateHandle.getStateFlow("username", "")
+    // Sample (ejemplo) blogs to show when DB is empty
+    private fun sampleBlogs(): List<FormularioBlogsEntity> = listOf(
+        FormularioBlogsEntity(
+            id = -1,
+            titulo = "Guía rápida de DarkZone",
+            descripcion = "Introducción y primeros pasos",
+            contenido = "Bienvenido a DarkZone...",
+            usuarioAutor = "admin",
+            fechaPublicacion = "2025-11-10",
+            esPublicado = true,
+            imagenUri = null
+        ),
+        FormularioBlogsEntity(
+            id = -2,
+            titulo = "Consejos de seguridad",
+            descripcion = "Mejora tu privacidad",
+            contenido = "Consejos y trucos para...",
+            usuarioAutor = "moderador",
+            fechaPublicacion = "2025-11-09",
+            esPublicado = true,
+            imagenUri = null
+        )
+    )
 
-    fun onTituloChange(titulo: String) {
-        _blogCreateState.update { it.copy(titulo = titulo) }
-    }
-
-    fun onDescripcionChange(descripcion: String) {
-        _blogCreateState.update { it.copy(descripcion = descripcion) }
-    }
-
-    fun onContenidoChange(contenido: String) {
-        _blogCreateState.update { it.copy(contenido = contenido) }
-    }
-
-    fun onImagenUriChange(uri: Uri?) {
-        _blogCreateState.update { it.copy(imagenUri = uri?.toString()) }
-    }
-
-    fun crearBlog() {
+    init {
         viewModelScope.launch {
-            val state = blogCreateState.value
-            val currentDateTime = LocalDateTime.now()
-            val formatter = DateTimeFormatter.ISO_DATE_TIME
-            val formattedDateTime = currentDateTime.format(formatter)
+            try {
+                repo.getBlogs().collectLatest { list ->
+                    if (list.isEmpty()) {
+                        // Si la DB está vacía, mostrar ejemplos en memoria
+                        _blogs.value = sampleBlogs()
+                    } else {
+                        _blogs.value = list
+                    }
+                }
+            } catch (e: Exception) {
+                // Log the error or handle it appropriately
+                e.printStackTrace()
+                _blogs.value = emptyList()
+            }
+        }
+    }
 
-            val blog = FormularioBlogsEntity(
-                titulo = state.titulo,
-                descripcion = state.descripcion,
-                contenido = state.contenido,
-                imagenUri = state.imagenUri,
-                usuarioAutor = username.value, // Use the logged-in user's name
-                fechaPublicacion = formattedDateTime,
-                esPublicado = true
-            )
-            repository.insertarBlog(blog)
-            // Reset state after saving
-            _blogCreateState.value = BlogCreateUiState()
+    fun loadBlogById(id: Long) {
+        viewModelScope.launch {
+            try {
+                // Preferir blog desde repo si existe, sino desde lista en memoria
+                val fromDb = repo.getBlogById(id)
+                _selectedBlog.value = fromDb ?: _blogs.value.firstOrNull { it.id == id }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _selectedBlog.value = null
+            }
+        }
+    }
+
+    fun markBlogAsViewed(id: Long) {
+        val blog = _blogs.value.firstOrNull { it.id == id } ?: return
+        val updated = listOf(blog) + _recentBlogs.value.filter { it.id != id }
+        _recentBlogs.value = updated.take(10)
+    }
+
+    fun crearBlog(
+        titulo: String,
+        descripcion: String,
+        contenido: String,
+        imagenUri: String?
+    ) {
+        viewModelScope.launch {
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val fecha = dateFormat.format(Date())
+                repo.insertarBlog(
+                    FormularioBlogsEntity(
+                        titulo = titulo,
+                        descripcion = descripcion,
+                        contenido = contenido,
+                        usuarioAutor = usuarioActual,
+                        fechaPublicacion = fecha,
+                        esPublicado = true,
+                        imagenUri = imagenUri
+                    )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
