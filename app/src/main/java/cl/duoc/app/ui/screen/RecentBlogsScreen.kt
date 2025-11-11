@@ -23,7 +23,7 @@ fun RecentBlogsScreen(
     viewModel: BlogViewModel,
     onBlogClicked: (Long) -> Unit
 ) {
-    val blogs by viewModel.blogs.collectAsState(initial = emptyList())
+    val blogs by viewModel.recentBlogs.collectAsState(initial = emptyList())
 
     LazyColumn(
         modifier = Modifier

@@ -22,10 +22,45 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     private val _selectedBlog = MutableStateFlow<FormularioBlogsEntity?>(null)
     val selectedBlog: StateFlow<FormularioBlogsEntity?> = _selectedBlog.asStateFlow()
 
+    // Recently viewed blogs (in-memory)
+    private val _recentBlogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
+    val recentBlogs: StateFlow<List<FormularioBlogsEntity>> = _recentBlogs.asStateFlow()
+
+    // Sample (ejemplo) blogs to show when DB is empty
+    private fun sampleBlogs(): List<FormularioBlogsEntity> = listOf(
+        FormularioBlogsEntity(
+            id = -1,
+            titulo = "Guía rápida de DarkZone",
+            descripcion = "Introducción y primeros pasos",
+            contenido = "Bienvenido a DarkZone...",
+            usuarioAutor = "admin",
+            fechaPublicacion = "2025-11-10",
+            esPublicado = true,
+            imagenUri = null
+        ),
+        FormularioBlogsEntity(
+            id = -2,
+            titulo = "Consejos de seguridad",
+            descripcion = "Mejora tu privacidad",
+            contenido = "Consejos y trucos para...",
+            usuarioAutor = "moderador",
+            fechaPublicacion = "2025-11-09",
+            esPublicado = true,
+            imagenUri = null
+        )
+    )
+
     init {
         viewModelScope.launch {
             try {
-                repo.getBlogs().collectLatest { list -> _blogs.value = list }
+                repo.getBlogs().collectLatest { list ->
+                    if (list.isEmpty()) {
+                        // Si la DB está vacía, mostrar ejemplos en memoria
+                        _blogs.value = sampleBlogs()
+                    } else {
+                        _blogs.value = list
+                    }
+                }
             } catch (e: Exception) {
                 // Log the error or handle it appropriately
                 e.printStackTrace()
@@ -37,12 +72,20 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     fun loadBlogById(id: Long) {
         viewModelScope.launch {
             try {
-                _selectedBlog.value = repo.getBlogById(id)
+                // Preferir blog desde repo si existe, sino desde lista en memoria
+                val fromDb = repo.getBlogById(id)
+                _selectedBlog.value = fromDb ?: _blogs.value.firstOrNull { it.id == id }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _selectedBlog.value = null
             }
         }
+    }
+
+    fun markBlogAsViewed(id: Long) {
+        val blog = _blogs.value.firstOrNull { it.id == id } ?: return
+        val updated = listOf(blog) + _recentBlogs.value.filter { it.id != id }
+        _recentBlogs.value = updated.take(10)
     }
 
     fun crearBlog(
