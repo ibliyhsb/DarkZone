@@ -26,9 +26,11 @@ import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
 import cl.duoc.app.ui.screen.ProfileScreen
 import cl.duoc.app.ui.screen.NewsScreen
+import cl.duoc.app.ui.screen.NewsDetailScreen
 import cl.duoc.app.ui.screen.RecentBlogsScreen
 import cl.duoc.app.viewmodel.BlogViewModel
 import cl.duoc.app.viewmodel.BlogViewModelFactory
+import cl.duoc.app.viewmodel.NewsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -159,14 +161,29 @@ fun NavBar() {
                     ContactScreen()
                 }
             }
-            composable(Routes.News) {
+            composable(Routes.News) { backStackEntry ->
+                val parentEntryForNews = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
+                val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = parentEntryForNews)
                 DrawerScaffold(
                     currentRoute = Routes.News,
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
                     scope = scope
                 ) {
-                    NewsScreen()
+                    NewsScreen(viewModel = newsVm, onOpen = { idx -> nav.navigate("noticias/$idx") })
+                }
+            }
+            composable("noticias/{id}") { backStackEntry ->
+                val idArg = backStackEntry.arguments?.getString("id")?.toIntOrNull()
+                val parentEntryForNews = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
+                val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = parentEntryForNews)
+                DrawerScaffold(
+                    currentRoute = Routes.News,
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope
+                ) {
+                    NewsDetailScreen(id = idArg, viewModel = newsVm)
                 }
             }
             composable(Routes.RecentBlogs) { // Added composable
