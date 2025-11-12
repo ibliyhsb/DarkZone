@@ -67,20 +67,27 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
             } catch (e: Exception) {
                 // Log the error or handle it appropriately
                 e.printStackTrace()
-                _blogs.value = emptyList()
+                _blogs.value = sampleBlogs() // Muestra los blogs de ejemplo si hay un error
             }
         }
     }
 
     fun loadBlogById(id: Long) {
         viewModelScope.launch {
-            try {
-                // Preferir blog desde repo si existe, sino desde lista en memoria
-                val fromDb = repo.getBlogById(id)
-                _selectedBlog.value = fromDb ?: _blogs.value.firstOrNull { it.id == id }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _selectedBlog.value = null
+            if (id < 0) { // Es un blog de ejemplo (ID negativo)
+                // Para blogs de ejemplo, buscar directamente en la función que los crea.
+                // Esto evita problemas si la lista principal (_blogs) aún no se ha cargado.
+                _selectedBlog.value = sampleBlogs().firstOrNull { it.id == id }
+            } else { // Blog real de la base de datos
+                try {
+                    // Para blogs reales, buscar en la base de datos.
+                    val fromDb = repo.getBlogById(id)
+                    _selectedBlog.value = fromDb
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Si hay un error, como fallback, intentar buscar en la lista en memoria.
+                    _selectedBlog.value = blogs.value.firstOrNull { it.id == id }
+                }
             }
         }
     }
@@ -113,11 +120,6 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                     )
                 )
                 Log.d("BlogViewModel", "Inserted blog id=$newId titulo=$titulo")
-                // Intentar cargar inmediatamente el blog insertado y añadirlo al inicio de la lista
-                val inserted = repo.getBlogById(newId)
-                inserted?.let {
-                    _blogs.value = listOf(it) + _blogs.value.filter { b -> b.id != it.id }
-                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
