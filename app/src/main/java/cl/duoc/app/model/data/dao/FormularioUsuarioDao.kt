@@ -18,7 +18,7 @@ interface FormularioUsuarioDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertarUsuario(usuario: FormularioUsuarioEntity)
 
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFormulario(formulario: FormularioUsuarioEntity): Long
 
     @Query("SELECT * FROM formulario_usuario ORDER BY id DESC")
@@ -27,4 +27,6 @@ interface FormularioUsuarioDao {
     @Query("DELETE FROM formulario_usuario")
     suspend fun deleteAll()
 
+    @Query("SELECT * FROM formulario_usuario WHERE nombre_usuario = :nombreUsuario AND passwordUsuario = :password LIMIT 1")
+    suspend fun findByUsernameAndPassword(nombreUsuario: String, password: String): FormularioUsuarioEntity?
 }
