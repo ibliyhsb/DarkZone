@@ -20,4 +20,7 @@ class FormularioUsuarioRepository(private val dao: FormularioUsuarioDao) {
 
     suspend fun limpiar() = dao.deleteAll()
 
+    suspend fun findByUsernameAndPassword(nombreUsuario: String, password: String): FormularioUsuarioEntity? {
+        return dao.findByUsernameAndPassword(nombreUsuario, password)
+    }
 }

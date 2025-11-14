@@ -76,10 +76,16 @@ class RegistroViewModel(private val registroRepository: FormularioUsuarioReposit
                 correoUsuario = ui.correoUsuario,
                 passwordUsuario = ui.passwordUsuario
             )
-            registroRepository.guardarFormulario(entity)
-            
-            _estado.update { it.copy(registroExitoso = true) }
-            
+            val errorMessage = registroRepository.guardarFormulario(entity)
+            if (errorMessage == null) {
+                _estado.update { it.copy(registroExitoso = true) }
+            } else {
+                if (errorMessage.contains("correo")) {
+                    _estado.update { it.copy(errores = it.errores.copy(correoUsuario = errorMessage)) }
+                } else {
+                    _estado.update { it.copy(errores = it.errores.copy(nombreUsuario = errorMessage)) }
+                }
+            }
         }
     }
 
