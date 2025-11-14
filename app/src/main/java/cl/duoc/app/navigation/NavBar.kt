@@ -1,5 +1,6 @@
 package cl.duoc.app.navigation
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -85,17 +86,17 @@ fun NavBar() {
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) {
             composable(Routes.Start) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.Start, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.Start, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     StartScreen()
                 }
             }
             composable(Routes.Form) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.Form, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.Form, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     FormularioServicioScreen()
                 }
             }
             composable(Routes.History) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.History, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.History, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     HistoryScreen()
                 }
             }
@@ -103,7 +104,7 @@ fun NavBar() {
                 val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
                 val username = parentEntry.arguments?.getString("username") ?: ""
                 val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav, username = username)
-                DrawerScaffold(currentRoute = Routes.Blogs, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.Blogs, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
                 }
             }
@@ -111,14 +112,14 @@ fun NavBar() {
                 val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
                 val username = parentEntry.arguments?.getString("username") ?: ""
                 val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav, username = username)
-                DrawerScaffold(currentRoute = Routes.BlogCreate, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.BlogCreate, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     BlogCreateScreen(viewModel = blogVm, onSaved = { nav.popBackStack() })
                 }
             }
             composable(Routes.Profile) { backStackEntry ->
                 val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
                 val username = parentEntry.arguments?.getString("username") ?: ""
-                DrawerScaffold(currentRoute = Routes.Profile, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope) {
+                DrawerScaffold(currentRoute = Routes.Profile, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     ProfileScreen(username = username)
                 }
             }
@@ -143,6 +144,7 @@ private fun DrawerScaffold(
     onNavigate: (String) -> Unit,
     drawerState: DrawerState,
     scope: CoroutineScope,
+    navController: NavController,
     content: @Composable () -> Unit
 ) {
     val destinations = listOf(
@@ -180,6 +182,22 @@ private fun DrawerScaffold(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
+                Spacer(modifier = Modifier.weight(1f))
+                Divider()
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Logout, contentDescription = "Cerrar Sesión") },
+                    label = { Text("Cerrar Sesión") },
+                    selected = false,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                            navController.navigate(Routes.Login) {
+                                popUpTo(0)
+                            }
+                        }
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
             }
         }
     ) {
