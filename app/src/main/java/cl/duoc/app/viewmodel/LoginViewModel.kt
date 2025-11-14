@@ -19,7 +19,7 @@ class LoginViewModel(private val repository: FormularioUsuarioRepository) : View
 
     fun onPasswordChange(v: String) = _estado.update { it.copy(passwordUsuario = v, errores = null) }
 
-    fun autenticar(onSuccess: () -> Unit) {
+    fun autenticar(onSuccess: (String) -> Unit) {
         viewModelScope.launch {
             _estado.update { it.copy(isLoading = true) }
             val autenticacion = _estado.value
@@ -27,7 +27,7 @@ class LoginViewModel(private val repository: FormularioUsuarioRepository) : View
 
             if (usuario != null) {
                 _estado.update { it.copy(errores = null, isLoading = false) }
-                onSuccess()
+                onSuccess(usuario.nombreUsuario)
             } else {
                 _estado.update { it.copy(errores = "Credenciales inválidas", isLoading = false) }
             }

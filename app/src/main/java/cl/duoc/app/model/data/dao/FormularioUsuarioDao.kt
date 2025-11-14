@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import cl.duoc.app.model.data.entities.FormularioUsuarioEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -29,4 +30,7 @@ interface FormularioUsuarioDao {
 
     @Query("SELECT * FROM formulario_usuario WHERE nombre_usuario = :nombreUsuario AND passwordUsuario = :password LIMIT 1")
     suspend fun findByUsernameAndPassword(nombreUsuario: String, password: String): FormularioUsuarioEntity?
+
+    @Update
+    suspend fun updateUser(usuario: FormularioUsuarioEntity)
 }

@@ -23,4 +23,12 @@ class FormularioUsuarioRepository(private val dao: FormularioUsuarioDao) {
     suspend fun findByUsernameAndPassword(nombreUsuario: String, password: String): FormularioUsuarioEntity? {
         return dao.findByUsernameAndPassword(nombreUsuario, password)
     }
+
+    suspend fun findByUsername(nombreUsuario: String): FormularioUsuarioEntity? {
+        return dao.existeNombreUsuario(nombreUsuario)
+    }
+
+    suspend fun updateUser(usuario: FormularioUsuarioEntity) {
+        dao.updateUser(usuario)
+    }
 }

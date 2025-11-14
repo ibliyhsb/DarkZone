@@ -40,14 +40,10 @@ import cl.duoc.app.viewmodel.LoginViewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onAuthenticated: () -> Unit,
+    viewModel: LoginViewModel,
+    onAuthenticated: (String) -> Unit,
     onNavigateToRegistro: () -> Unit
 ) {
-    val context = LocalContext.current
-    val db = remember(context) { AppDatabase.getDatabase(context) }
-    val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-    val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
-
     val estado by viewModel.estado.collectAsState()
     var pwVisible by remember { mutableStateOf(false) }
 
@@ -121,10 +117,9 @@ fun LoginScreen(
 @Preview(showBackground = true)
 @Composable
 private fun LoginPreview() {
-        val context = LocalContext.current
-        val db = remember(context) { AppDatabase.getDatabase(context) }
-        val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-        val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
-        LoginScreen(onAuthenticated = {}, onNavigateToRegistro = {})
-
+    val context = LocalContext.current
+    val db = remember(context) { AppDatabase.getDatabase(context) }
+    val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
+    val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
+    LoginScreen(viewModel = viewModel, onAuthenticated = {}, onNavigateToRegistro = {})
 }
