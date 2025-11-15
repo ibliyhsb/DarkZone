@@ -66,7 +66,7 @@ fun NavBar() {
             val context = LocalContext.current
             val db = remember(context) { AppDatabase.getDatabase(context) }
             val repository = remember(db) { cl.duoc.app.model.data.repository.FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository, it))
+            val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(it, repository))
 
             LoginScreen(
                 viewModel = viewModel,

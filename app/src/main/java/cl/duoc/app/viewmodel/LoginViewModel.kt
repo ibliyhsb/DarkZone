@@ -52,7 +52,7 @@ class LoginViewModel(private val repository: FormularioUsuarioRepository, privat
             _state.update { it.copy(isLoading = true) }
             val user = state.value.user
             val pass = state.value.pass
-            val usuario = repository.getUsuario(user, pass)
+            val usuario = repository.findByUsernameAndPassword(user, pass)
 
             if (usuario != null) {
                 savedStateHandle["user"] = user
