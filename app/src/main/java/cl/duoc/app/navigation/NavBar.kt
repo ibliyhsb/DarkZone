@@ -27,6 +27,8 @@ import cl.duoc.app.ui.screen.FormularioRegistroScreen
 import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
 import cl.duoc.app.ui.screen.ProfileScreen
+import cl.duoc.app.ui.screen.NewsScreen
+import cl.duoc.app.ui.screen.NewsDetailScreen
 import cl.duoc.app.viewmodel.BlogViewModel
 import cl.duoc.app.viewmodel.BlogViewModelFactory
 import cl.duoc.app.viewmodel.LoginViewModel
@@ -46,6 +48,7 @@ object Routes {
     const val Contact = "contacto"
     const val Profile = "perfil"
     const val News = "noticias"
+    const val NewsDetail = "news_detail/{id}"
     const val RecentBlogs = "recent_blogs"
 }
 
@@ -105,6 +108,21 @@ fun NavBar() {
                 val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
                 DrawerScaffold(currentRoute = Routes.Blogs, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
+                }
+            }
+            composable(Routes.News) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
+                val newsVm: cl.duoc.app.viewmodel.NewsViewModel = viewModel(viewModelStoreOwner = parentEntry)
+                DrawerScaffold(currentRoute = Routes.News, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
+                    NewsScreen(viewModel = newsVm, onOpen = { id -> nav.navigate("news_detail/$id") })
+                }
+            }
+            composable("news_detail/{id}", arguments = listOf(navArgument("id") { type = NavType.IntType })) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id")
+                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
+                val newsVm: cl.duoc.app.viewmodel.NewsViewModel = viewModel(viewModelStoreOwner = parentEntry)
+                DrawerScaffold(currentRoute = Routes.News, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
+                    NewsDetailScreen(id = id, viewModel = newsVm)
                 }
             }
             composable(Routes.BlogCreate) { backStackEntry ->
