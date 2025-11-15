@@ -1,41 +1,41 @@
 package cl.duoc.app.viewmodel
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
-import cl.duoc.app.model.domain.BlogCreateUIState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-class BlogViewModel(private val repo: FormularioBlogsRepository, private val usuarioActual: String) : ViewModel() {
+data class BlogCreateUiState(
+    val titulo: String = "",
+    val descripcion: String = "",
+    val contenido: String = "",
+    val imagenUri: String? = null
+)
 
-    private val _blogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
-    val blogs: StateFlow<List<FormularioBlogsEntity>> = _blogs.asStateFlow()
+class BlogViewModel(
+    private val repository: FormularioBlogsRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-    private val _blogCreateState = MutableStateFlow(BlogCreateUIState())
-    val blogCreateState: StateFlow<BlogCreateUIState> = _blogCreateState.asStateFlow()
+    val blogs: StateFlow<List<FormularioBlogsEntity>> = repository.getBlogs()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    init {
-        viewModelScope.launch {
-            try {
-                repo.getBlogs().collectLatest { list -> _blogs.value = list }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _blogs.value = emptyList()
-            }
-        }
-    }
+    private val _blogCreateState = MutableStateFlow(BlogCreateUiState())
+    val blogCreateState = _blogCreateState.asStateFlow()
 
-    // Funciones para actualizar el estado de creación de blogs
+    private val username: StateFlow<String> = savedStateHandle.getStateFlow("username", "")
+
     fun onTituloChange(titulo: String) {
         _blogCreateState.update { it.copy(titulo = titulo) }
     }
@@ -49,32 +49,28 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     }
 
     fun onImagenUriChange(uri: Uri?) {
-        _blogCreateState.update { it.copy(imagenUri = uri) }
+        _blogCreateState.update { it.copy(imagenUri = uri?.toString()) }
     }
 
     fun crearBlog() {
         viewModelScope.launch {
-            try {
-                val state = _blogCreateState.value
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val fecha = dateFormat.format(Date())
+            val state = blogCreateState.value
+            val currentDateTime = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ISO_DATE_TIME
+            val formattedDateTime = currentDateTime.format(formatter)
 
-                repo.insertarBlog(
-                    FormularioBlogsEntity(
-                        titulo = state.titulo,
-                        descripcion = state.descripcion,
-                        contenido = state.contenido,
-                        usuarioAutor = usuarioActual,
-                        fechaPublicacion = fecha,
-                        esPublicado = true,
-                        imagenUri = state.imagenUri?.toString()
-                    )
-                )
-                // Limpiar el estado después de crear el blog
-                _blogCreateState.value = BlogCreateUIState()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            val blog = FormularioBlogsEntity(
+                titulo = state.titulo,
+                descripcion = state.descripcion,
+                contenido = state.contenido,
+                imagenUri = state.imagenUri,
+                usuarioAutor = username.value, // Use the logged-in user's name
+                fechaPublicacion = formattedDateTime,
+                esPublicado = true
+            )
+            repository.insertarBlog(blog)
+            // Reset state after saving
+            _blogCreateState.value = BlogCreateUiState()
         }
     }
 }

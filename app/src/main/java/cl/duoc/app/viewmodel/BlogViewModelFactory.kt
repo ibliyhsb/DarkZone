@@ -1,17 +1,26 @@
 package cl.duoc.app.viewmodel
 
+import android.os.Bundle
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.savedstate.SavedStateRegistryOwner
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 
 class BlogViewModelFactory(
-    private val repo: FormularioBlogsRepository,
-    private val usuarioActual: String
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+    owner: SavedStateRegistryOwner,
+    private val repository: FormularioBlogsRepository,
+    defaultArgs: Bundle? = null
+) : AbstractSavedStateViewModelFactory(owner, defaultArgs) {
+
+    override fun <T : ViewModel> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle
+    ): T {
         if (modelClass.isAssignableFrom(BlogViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return BlogViewModel(repo, usuarioActual) as T
+            return BlogViewModel(repository, handle) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

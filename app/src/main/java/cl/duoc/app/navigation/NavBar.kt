@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -65,7 +66,7 @@ fun NavBar() {
             val context = LocalContext.current
             val db = remember(context) { AppDatabase.getDatabase(context) }
             val repository = remember(db) { cl.duoc.app.model.data.repository.FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
+            val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository, it))
 
             LoginScreen(
                 viewModel = viewModel,
@@ -101,17 +102,13 @@ fun NavBar() {
                 }
             }
             composable(Routes.Blogs) { backStackEntry ->
-                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
-                val username = parentEntry.arguments?.getString("username") ?: ""
-                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav, username = username)
+                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
                 DrawerScaffold(currentRoute = Routes.Blogs, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
                 }
             }
             composable(Routes.BlogCreate) { backStackEntry ->
-                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
-                val username = parentEntry.arguments?.getString("username") ?: ""
-                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav, username = username)
+                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
                 DrawerScaffold(currentRoute = Routes.BlogCreate, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     BlogCreateScreen(viewModel = blogVm, onSaved = { nav.popBackStack() })
                 }
@@ -128,12 +125,12 @@ fun NavBar() {
 }
 
 @Composable
-private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavController, username: String): BlogViewModel {
+private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavController): BlogViewModel {
     val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repo = remember(db) { FormularioBlogsRepository(db.formularioBlogsDao()) }
-    val factory = remember(repo) { BlogViewModelFactory(repo, usuarioActual = username) }
+    val factory = remember(repo) { BlogViewModelFactory(parentEntry, repo) }
     return viewModel(viewModelStoreOwner = parentEntry, factory = factory)
 }
 

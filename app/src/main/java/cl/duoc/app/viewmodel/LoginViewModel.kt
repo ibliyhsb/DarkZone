@@ -1,36 +1,69 @@
 package cl.duoc.app.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
-import cl.duoc.app.model.domain.LoginUIState
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class LoginViewModel(private val repository: FormularioUsuarioRepository) : ViewModel() {
+data class LoginUiState(
+    val user: String = "",
+    val pass: String = "",
+    val sesionActiva: Boolean = false,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
-    private val _estado = MutableStateFlow(LoginUIState())
-    val estado: StateFlow<LoginUIState> = _estado.asStateFlow()
+class LoginViewModel(private val repository: FormularioUsuarioRepository, private val savedStateHandle: SavedStateHandle) : ViewModel() {
 
-    fun onNombreChange(v: String) = _estado.update { it.copy(nombreUsuario = v, errores = null) }
+    private val _state = MutableStateFlow(LoginUiState())
+    val state = _state.asStateFlow()
 
-    fun onPasswordChange(v: String) = _estado.update { it.copy(passwordUsuario = v, errores = null) }
+    private val username: MutableStateFlow<String> = savedStateHandle.get<String>("user")?.let {
+        MutableStateFlow(it)
+    } ?: MutableStateFlow("")
 
-    fun autenticar(onSuccess: (String) -> Unit) {
+
+    init {
         viewModelScope.launch {
-            _estado.update { it.copy(isLoading = true) }
-            val autenticacion = _estado.value
-            val usuario = repository.findByUsernameAndPassword(autenticacion.nombreUsuario, autenticacion.passwordUsuario)
-
-            if (usuario != null) {
-                _estado.update { it.copy(errores = null, isLoading = false) }
-                onSuccess(usuario.nombreUsuario)
-            } else {
-                _estado.update { it.copy(errores = "Credenciales inválidas", isLoading = false) }
+            username.collect{
+                _state.update {currentState ->
+                    currentState.copy(
+                        user = it
+                    )
+                }
             }
         }
+    }
+
+    fun onUserChange(user: String) {
+        username.value = user
+    }
+
+    fun onPassChange(pass: String) {
+        _state.update { it.copy(pass = pass) }
+    }
+
+    fun login() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            val user = state.value.user
+            val pass = state.value.pass
+            val usuario = repository.getUsuario(user, pass)
+
+            if (usuario != null) {
+                savedStateHandle["user"] = user
+                _state.update { it.copy(sesionActiva = true, error = null, isLoading = false) }
+            } else {
+                _state.update { it.copy(error = "Usuario o contraseña incorrectos", isLoading = false) }
+            }
+        }
+    }
+
+    fun clearError(){
+        _state.update { it.copy(error = null) }
     }
 }

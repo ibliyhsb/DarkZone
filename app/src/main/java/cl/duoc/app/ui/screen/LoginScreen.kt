@@ -17,6 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
-import cl.duoc.app.ui.components.InputText
 import cl.duoc.app.viewmodel.LoginViewModel
 import cl.duoc.app.viewmodel.LoginViewModelFactory
 
@@ -44,8 +44,14 @@ fun LoginScreen(
     onAuthenticated: (String) -> Unit,
     onNavigateToRegistro: () -> Unit
 ) {
-    val estado by viewModel.estado.collectAsState()
+    val estado by viewModel.state.collectAsState()
     var pwVisible by remember { mutableStateOf(false) }
+
+    if (estado.sesionActiva) {
+        LaunchedEffect(estado.sesionActiva) {
+            onAuthenticated(estado.user)
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -63,18 +69,19 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            InputText(
-                valor = estado.nombreUsuario,
-                error = null,
-                label = "Nombre de usuario",
-                onChange = viewModel::onNombreChange
+            OutlinedTextField(
+                value = estado.user,
+                onValueChange = viewModel::onUserChange,
+                label = { Text("Nombre de usuario") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = estado.error != null
             )
 
             Spacer(Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = estado.passwordUsuario,
-                onValueChange = viewModel::onPasswordChange,
+                value = estado.pass,
+                onValueChange = viewModel::onPassChange,
                 label = { Text("Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (pwVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -84,9 +91,9 @@ fun LoginScreen(
                         Text(if (pwVisible) "Ocultar" else "Mostrar")
                     }
                 },
-                isError = estado.errores != null,
+                isError = estado.error != null,
                 supportingText = {
-                    estado.errores?.let {
+                    estado.error?.let {
                         if (!estado.isLoading) {
                             Text(it, color = MaterialTheme.colorScheme.error)
                         }
@@ -100,7 +107,7 @@ fun LoginScreen(
                 CircularProgressIndicator()
             } else {
                 Button(
-                    onClick = { viewModel.autenticar(onAuthenticated) },
+                    onClick = { viewModel.login() },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Iniciar sesión")
@@ -120,6 +127,6 @@ private fun LoginPreview() {
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-    val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
-    LoginScreen(viewModel = viewModel, onAuthenticated = {}, onNavigateToRegistro = {})
+    // val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(repository))
+    // LoginScreen(viewModel = viewModel, onAuthenticated = {}, onNavigateToRegistro = {})
 }
