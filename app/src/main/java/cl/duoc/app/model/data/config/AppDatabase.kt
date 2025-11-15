@@ -13,7 +13,7 @@ import cl.duoc.app.model.data.entities.FormularioUsuarioEntity
 
 @Database(
     entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class],
-    version = 5, // Incremented version from 4 to 5
+    version = 6, // Incremented version from 5 to 6
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,8 +35,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // Migration from version 4 to 5 - Remove foreign key constraint
+        // Migration from version 4 to 5 - This migration was empty, perhaps a placeholder?
         private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // No changes were made in this migration.
+            }
+        }
+
+        // Migration from version 5 to 6 - Remove foreign key constraint
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // Create a new table without the foreign key constraint
                 database.execSQL("""
@@ -77,7 +84,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5) // Add all migrations
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6) // Add all migrations
                     .build()
                 INSTANCE = instance
                 instance
