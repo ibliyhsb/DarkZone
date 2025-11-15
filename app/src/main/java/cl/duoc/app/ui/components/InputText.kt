@@ -7,6 +7,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.VisualTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -14,7 +15,9 @@ fun InputText(
     valor: String,
     error: String?,
     label: String,
-    onChange: (String) -> Unit
+    onChange: (String) -> Unit,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     OutlinedTextField(
         value = valor,
@@ -26,6 +29,8 @@ fun InputText(
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        visualTransformation = visualTransformation,
+        trailingIcon = trailingIcon
     )
 }

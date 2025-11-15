@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,14 +17,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.app.model.domain.FormularioRegistroErrores
 import cl.duoc.app.viewmodel.RegistroViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import cl.duoc.app.model.domain.RegistroUiState
 import cl.duoc.app.viewmodel.RegistroViewModelFactory
 import androidx.compose.ui.tooling.preview.Preview
 import cl.duoc.app.ui.components.InputText
@@ -43,6 +41,7 @@ fun FormularioRegistroScreen(onNavigateToLogin: () -> Unit = {}) {
 
     val estado by viewModel.estado.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pwVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.estado.collectLatest {
@@ -89,7 +88,13 @@ fun FormularioRegistroScreen(onNavigateToLogin: () -> Unit = {}) {
                 valor = estado.passwordUsuario,
                 error = estado.errores.passwordUsuario,
                 label = "Contraseña",
-                onChange = viewModel::onPasswordChange
+                onChange = viewModel::onPasswordChange,
+                visualTransformation = if (pwVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    TextButton(onClick = { pwVisible = !pwVisible }) {
+                        Text(if (pwVisible) "Ocultar" else "Mostrar")
+                    }
+                }
             )
 
             Spacer(Modifier.height(8.dp))
