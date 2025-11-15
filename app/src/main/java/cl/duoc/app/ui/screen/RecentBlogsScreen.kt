@@ -1,5 +1,6 @@
 package cl.duoc.app.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +18,7 @@ import androidx.compose.ui.unit.dp
 data class BlogPost(val title: String, val author: String)
 
 @Composable
-fun RecentBlogsScreen() {
+fun RecentBlogsScreen(onBlogClick: (BlogPost) -> Unit) {
     // This is sample data. In a real app, you would get this from a ViewModel.
     val recentBlogs = listOf(
         BlogPost("El Caleuche: El Barco Fantasma de Chiloé:", "Ana"),
@@ -32,17 +33,18 @@ fun RecentBlogsScreen() {
             .padding(16.dp)
     ) {
         items(recentBlogs) { blog ->
-            BlogItem(blog)
+            BlogItem(blog = blog, onClick = { onBlogClick(blog) })
         }
     }
 }
 
 @Composable
-fun BlogItem(blog: BlogPost) {
+fun BlogItem(blog: BlogPost, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .clickable(onClick = onClick)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = blog.title, style = MaterialTheme.typography.titleMedium)

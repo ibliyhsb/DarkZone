@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,10 +39,25 @@ fun BlogCreateScreen(
         onResult = { uri -> viewModel.onImagenUriChange(uri) }
     )
 
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         OutlinedTextField(value = state.titulo, onValueChange = { viewModel.onTituloChange(it) }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = state.descripcion, onValueChange = { viewModel.onDescripcionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = state.contenido, onValueChange = { viewModel.onContenidoChange(it) }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp))
+
+        if (state.titulo.isBlank() || state.contenido.isBlank()) {
+            Text(
+                text = "El título y el contenido son obligatorios para publicar.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
 
         if (state.imagenUri != null) {
             Image(
