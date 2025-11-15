@@ -16,7 +16,9 @@ data class ProfileUIState(
     val passwordUsuario: String = "",
     val id: Long = 0,
     val updateSuccess: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showConfirmDialog: Boolean = false,
+    val deleteSuccess: Boolean = false
 )
 
 class ProfileViewModel(private val repository: FormularioUsuarioRepository, private val username: String) : ViewModel() {
@@ -75,5 +77,26 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
 
     fun onSuccessMessageShown() {
         _state.update { it.copy(updateSuccess = false) }
+    }
+
+    fun onDeleteRequest() {
+        _state.update { it.copy(showConfirmDialog = true) }
+    }
+
+    fun onDeleteConfirm() {
+        viewModelScope.launch {
+            val user = FormularioUsuarioEntity(
+                id = _state.value.id,
+                nombreUsuario = _state.value.nombreUsuario,
+                correoUsuario = _state.value.correoUsuario,
+                passwordUsuario = _state.value.passwordUsuario
+            )
+            repository.deleteUser(user)
+            _state.update { it.copy(deleteSuccess = true, showConfirmDialog = false) }
+        }
+    }
+
+    fun onDeleteCancel() {
+        _state.update { it.copy(showConfirmDialog = false) }
     }
 }

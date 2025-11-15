@@ -1,6 +1,7 @@
 package cl.duoc.app.model.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -33,4 +34,7 @@ interface FormularioUsuarioDao {
 
     @Update
     suspend fun updateUser(usuario: FormularioUsuarioEntity)
+
+    @Delete
+    suspend fun deleteUser(usuario: FormularioUsuarioEntity)
 }

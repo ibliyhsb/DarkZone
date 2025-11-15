@@ -31,4 +31,8 @@ class FormularioUsuarioRepository(private val dao: FormularioUsuarioDao) {
     suspend fun updateUser(usuario: FormularioUsuarioEntity) {
         dao.updateUser(usuario)
     }
+
+    suspend fun deleteUser(usuario: FormularioUsuarioEntity) {
+        dao.deleteUser(usuario)
+    }
 }

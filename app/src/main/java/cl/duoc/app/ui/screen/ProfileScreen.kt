@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -15,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,14 +28,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.navigation.Routes
 import cl.duoc.app.viewmodel.ProfileViewModel
 import cl.duoc.app.viewmodel.ProfileViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(username: String) {
+fun ProfileScreen(username: String, navController: NavController) {
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
@@ -46,6 +51,32 @@ fun ProfileScreen(username: String) {
             snackbarHostState.showSnackbar("Perfil actualizado con éxito")
             viewModel.onSuccessMessageShown()
         }
+    }
+
+    LaunchedEffect(state.deleteSuccess) {
+        if (state.deleteSuccess) {
+            navController.navigate(Routes.Registro) {
+                popUpTo(0)
+            }
+        }
+    }
+
+    if (state.showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onDeleteCancel() },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onDeleteConfirm() }) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onDeleteCancel() }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -97,6 +128,16 @@ fun ProfileScreen(username: String) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Guardar cambios")
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Button(
+                onClick = { viewModel.onDeleteRequest() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Eliminar cuenta")
             }
         }
     }

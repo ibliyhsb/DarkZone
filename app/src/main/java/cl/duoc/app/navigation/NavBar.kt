@@ -120,7 +120,7 @@ fun NavBar() {
                 val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
                 val username = parentEntry.arguments?.getString("username") ?: ""
                 DrawerScaffold(currentRoute = Routes.Profile, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    ProfileScreen(username = username)
+                    ProfileScreen(username = username, navController = nav)
                 }
             }
         }
