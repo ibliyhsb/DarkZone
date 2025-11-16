@@ -37,7 +37,7 @@ import cl.duoc.app.viewmodel.ProfileViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(username: String, navController: NavController) {
+fun ProfileScreen(username: String = "usuario_demo", navController: NavController? = null) {
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repository = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
@@ -54,7 +54,7 @@ fun ProfileScreen(username: String, navController: NavController) {
     }
 
     LaunchedEffect(state.deleteSuccess) {
-        if (state.deleteSuccess) {
+        if (state.deleteSuccess && navController != null) {
             navController.navigate(Routes.Registro) {
                 popUpTo(0)
             }

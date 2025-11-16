@@ -10,6 +10,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.viewmodel.LoginViewModel
+import cl.duoc.app.viewmodel.LoginViewModelFactory
+import cl.duoc.app.viewmodel.NewsViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -25,6 +30,7 @@ import kotlinx.coroutines.launch
 
 object Routes {
     const val Login = "login"
+    const val Registro = "registro"
     const val Start = "start"
     const val Form = "form"
     const val History = "historias"
@@ -48,13 +54,22 @@ fun NavBar() {
 
     NavHost(navController = nav, startDestination = Routes.Login) {
         composable(Routes.Login) {
+            val context = LocalContext.current
+            val db = remember(context) { AppDatabase.getDatabase(context) }
+            val repo = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
+            val entry = remember { nav.getBackStackEntry(Routes.Login) }
+            val loginFactory = remember(repo, entry) { LoginViewModelFactory(entry, repo) }
+            val loginVm: LoginViewModel = viewModel(viewModelStoreOwner = entry, factory = loginFactory)
+
             LoginScreen(
+                viewModel = loginVm,
                 onAuthenticated = {
                     nav.navigate("main_shell") { // Navigate to the nested graph
                         popUpTo(Routes.Login) { inclusive = true }
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToRegistro = { nav.navigate(Routes.Registro) }
             )
         }
 
@@ -164,13 +179,15 @@ fun NavBar() {
                 }
             }
             composable(Routes.News) {
+                    val newsEntry = remember { nav.getBackStackEntry("main_shell") }
+                    val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
                 DrawerScaffold(
                     onNavigate = { nav.navigate(it) },
                     drawerState = drawerState,
                     scope = scope,
                     navController = nav
                 ) {
-                    NewsScreen()
+                    NewsScreen(viewModel = newsVm, onOpen = {})
                 }
             }
             composable(Routes.RecentBlogs) {
@@ -197,7 +214,7 @@ private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavCo
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repo = remember(db) { FormularioBlogsRepository(db.formularioBlogsDao()) }
-    val factory = remember(repo) { BlogViewModelFactory(repo, usuarioActual = "usuario_demo") }
+    val factory = remember(repo, parentEntry) { BlogViewModelFactory(parentEntry, repo) }
     return viewModel(viewModelStoreOwner = parentEntry, factory = factory)
 }
 
