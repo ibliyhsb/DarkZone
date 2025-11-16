@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 class FormularioBlogsRepository(private val dao: FormularioBlogsDao) {
     
-    suspend fun insertarBlog(blog: FormularioBlogsEntity) {
-        dao.insertBlog(blog)
+    suspend fun insertarBlog(blog: FormularioBlogsEntity): Long {
+        return dao.insertBlog(blog)
     }
     
     suspend fun updateBlog(blog: FormularioBlogsEntity) {

@@ -36,7 +36,7 @@ fun FormularioRegistroScreen(onNavigateToLogin: () -> Unit = {}) {
 
     val content = androidx.compose.ui.platform.LocalContext.current
     val viewModel: RegistroViewModel = viewModel(
-        factory = RegistroViewModelFactory(content.applicationContext as Application)
+        factory = RegistroViewModelFactory(content.applicationContext)
     )
 
     val estado by viewModel.estado.collectAsState()

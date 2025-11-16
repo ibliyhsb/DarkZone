@@ -11,35 +11,35 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-// Temporal data class for demonstration purposes
-data class BlogPost(val title: String, val author: String)
+import cl.duoc.app.model.data.entities.FormularioBlogsEntity
+import cl.duoc.app.viewmodel.BlogViewModel
 
 @Composable
-fun RecentBlogsScreen(onBlogClick: (BlogPost) -> Unit) {
-    // This is sample data. In a real app, you would get this from a ViewModel.
-    val recentBlogs = listOf(
-        BlogPost("El Caleuche: El Barco Fantasma de Chiloé:", "Ana"),
-        BlogPost("El Trauco: El Ser de la Noche:", "Luis"),
-        BlogPost("La Llorona del Mapocho", "Maria"),
-        BlogPost("Catalina de los Ríos y Lisperguer: La Quintrala:", "Carlos"),
-    )
+fun RecentBlogsScreen(
+    viewModel: BlogViewModel,
+    onBlogClicked: (Long) -> Unit
+) {
+    val blogs by viewModel.recentBlogs.collectAsState(initial = emptyList())
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        items(recentBlogs) { blog ->
-            BlogItem(blog = blog, onClick = { onBlogClick(blog) })
+        items(blogs) { blog ->
+            BlogItem(blog) {
+                onBlogClicked(blog.id)
+            }
         }
     }
 }
 
 @Composable
-fun BlogItem(blog: BlogPost, onClick: () -> Unit) {
+fun BlogItem(blog: FormularioBlogsEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -47,8 +47,8 @@ fun BlogItem(blog: BlogPost, onClick: () -> Unit) {
             .clickable(onClick = onClick)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = blog.title, style = MaterialTheme.typography.titleMedium)
-            Text(text = "por ${blog.author}", style = MaterialTheme.typography.bodySmall)
+            Text(text = blog.titulo, style = MaterialTheme.typography.titleMedium)
+            Text(text = "por ${blog.usuarioAutor}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

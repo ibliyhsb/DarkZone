@@ -12,6 +12,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.viewmodel.LoginViewModel
+import cl.duoc.app.viewmodel.LoginViewModelFactory
+import cl.duoc.app.viewmodel.NewsViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -19,6 +24,7 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import cl.duoc.app.ui.screen.*
 import cl.duoc.app.ui.screen.BlogCreateScreen
 import cl.duoc.app.ui.screen.BlogScreen
 import cl.duoc.app.ui.screen.FormularioRegistroScreen
@@ -45,45 +51,47 @@ object Routes {
     const val NewsDetail = "news_detail/{id}"
 }
 
+@Suppress("UnrememberedGetBackStackEntry")
 @Composable
 fun NavBar() {
     val nav = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    NavHost(navController = nav, startDestination = Routes.Registro) {
+    NavHost(navController = nav, startDestination = Routes.Login) {
+        composable(Routes.Login) {
+            val context = LocalContext.current
+            val db = remember(context) { AppDatabase.getDatabase(context) }
+            val repo = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
+            val entry = remember(nav.getBackStackEntry(Routes.Login)) { nav.getBackStackEntry(Routes.Login) }
+            val loginFactory = remember(repo, entry) { LoginViewModelFactory(entry, repo) }
+            val loginVm: LoginViewModel = viewModel(viewModelStoreOwner = entry, factory = loginFactory)
+
+            LoginScreen(
+                viewModel = loginVm,
+                onAuthenticated = {
+                    nav.navigate("main_shell") { // Navigate to the nested graph
+                        popUpTo(Routes.Login) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToRegistro = { nav.navigate(Routes.Registro) }
+            )
+        }
         composable(Routes.Registro) {
             FormularioRegistroScreen(onNavigateToLogin = {
                 nav.navigate(Routes.Login)
             })
         }
 
-        composable(Routes.Login) {
-            val context = LocalContext.current
-            val db = remember(context) { AppDatabase.getDatabase(context) }
-            val repository = remember(db) { cl.duoc.app.model.data.repository.FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(it, repository))
-
-            LoginScreen(
-                viewModel = viewModel,
-                onAuthenticated = { username ->
-                    nav.navigate("main_shell/$username") {
-                        popUpTo(0)
-                    }
-                },
-                onNavigateToRegistro = {
-                    nav.navigate(Routes.Registro)
-                }
-            )
-        }
-
-        navigation(
-            startDestination = Routes.Start,
-            route = "main_shell/{username}",
-            arguments = listOf(navArgument("username") { type = NavType.StringType })
-        ) {
-            composable(Routes.Start) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.Start, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
+        navigation(startDestination = Routes.Start, route = "main_shell") {
+            composable(Routes.Start) {
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
                     StartScreen()
                 }
             }
@@ -93,32 +101,92 @@ fun NavBar() {
                     BlogScreen(viewModel = blogVm, onNewBlog = { nav.navigate(Routes.BlogCreate) })
                 }
             }
-            composable(Routes.News) { backStackEntry ->
-                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
-                val newsVm: cl.duoc.app.viewmodel.NewsViewModel = viewModel(viewModelStoreOwner = parentEntry)
-                DrawerScaffold(currentRoute = Routes.News, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    NewsScreen(viewModel = newsVm, onOpen = { id -> nav.navigate("news_detail/$id") })
-                }
-            }
-            composable("news_detail/{id}", arguments = listOf(navArgument("id") { type = NavType.IntType })) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("id")
-                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
-                val newsVm: cl.duoc.app.viewmodel.NewsViewModel = viewModel(viewModelStoreOwner = parentEntry)
-                DrawerScaffold(currentRoute = Routes.News, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    NewsDetailScreen(id = id, viewModel = newsVm)
-                }
-            }
-            composable(Routes.BlogCreate) { backStackEntry ->
-                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
-                DrawerScaffold(currentRoute = Routes.BlogCreate, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
+            composable(Routes.BlogCreate) {
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
                     BlogCreateScreen(viewModel = blogVm, onSaved = { nav.popBackStack() })
                 }
             }
-            composable(Routes.Profile) { backStackEntry ->
-                val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{username}") }
-                val username = parentEntry.arguments?.getString("username") ?: ""
-                DrawerScaffold(currentRoute = Routes.Profile, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    ProfileScreen(username = username, navController = nav)
+            composable(
+                route = Routes.BlogDetail,
+                arguments = listOf(navArgument("blogId") { type = NavType.LongType })
+            ) {
+                val blogId = it.arguments?.getLong("blogId")
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
+                DrawerScaffold(
+                    onNavigate = { route -> nav.navigate(route) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    BlogCreateScreen(
+                        viewModel = blogVm,
+                        onSaved = { nav.popBackStack() },
+                        blogId = blogId,
+                        readOnly = true
+                    )
+                }
+            }
+
+            composable(Routes.Profile) {
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    ProfileScreen()
+                }
+            }
+            composable(Routes.Favorites) {
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    FavoritiesScreen()
+                }
+            }
+            composable(Routes.Contact) {
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    ContactScreen()
+                }
+            }
+                composable(Routes.News) {
+                    val newsEntry = remember(nav.getBackStackEntry("main_shell")) { nav.getBackStackEntry("main_shell") }
+                    val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    NewsScreen(viewModel = newsVm, onOpen = {})
+                }
+            }
+            composable(Routes.RecentBlogs) {
+                val blogVm = getSharedBlogViewModel(backStackEntry = it, nav = nav)
+                DrawerScaffold(
+                    onNavigate = { nav.navigate(it) },
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = nav
+                ) {
+                    RecentBlogsScreen(
+                        viewModel = blogVm,
+                        onBlogClicked = { blogId -> nav.navigate(Routes.blogDetail(blogId)) }
+                    )
                 }
             }
         }

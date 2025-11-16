@@ -19,8 +19,9 @@ class BlogViewModelFactory(
         handle: SavedStateHandle
     ): T {
         if (modelClass.isAssignableFrom(BlogViewModel::class.java)) {
+            val usuario = handle.get<String>("usuarioActual") ?: "usuario_demo"
             @Suppress("UNCHECKED_CAST")
-            return BlogViewModel(repository, handle) as T
+            return BlogViewModel(repository, usuario) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 interface FormularioBlogsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBlog(blog: FormularioBlogsEntity)
+    suspend fun insertBlog(blog: FormularioBlogsEntity): Long
 
     @Update
     suspend fun updateBlog(blog: FormularioBlogsEntity)
