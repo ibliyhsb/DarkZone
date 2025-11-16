@@ -33,9 +33,19 @@ import cl.duoc.app.viewmodel.BlogViewModel
 @Composable
 fun BlogCreateScreen(
     viewModel: BlogViewModel,
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    blogId: Long? = null,
+    readOnly: Boolean = false
 ) {
     val state by viewModel.blogCreateState.collectAsState()
+    val selected by viewModel.selectedBlog.collectAsState()
+
+    // If opened for detail, load the blog
+    LaunchedEffect(blogId, readOnly) {
+        if (readOnly && blogId != null) {
+            viewModel.loadBlogById(blogId)
+        }
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -49,9 +59,13 @@ fun BlogCreateScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        OutlinedTextField(value = state.titulo, onValueChange = { viewModel.onTituloChange(it) }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = state.descripcion, onValueChange = { viewModel.onDescripcionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = state.contenido, onValueChange = { viewModel.onContenidoChange(it) }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp))
+        val tituloText = if (readOnly) selected?.titulo ?: "" else state.titulo
+        val descripcionText = if (readOnly) selected?.descripcion ?: "" else state.descripcion
+        val contenidoText = if (readOnly) selected?.contenido ?: "" else state.contenido
+
+        OutlinedTextField(value = tituloText, onValueChange = { if (!readOnly) viewModel.onTituloChange(it) }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth(), enabled = !readOnly)
+        OutlinedTextField(value = descripcionText, onValueChange = { if (!readOnly) viewModel.onDescripcionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), enabled = !readOnly)
+        OutlinedTextField(value = contenidoText, onValueChange = { if (!readOnly) viewModel.onContenidoChange(it) }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), enabled = !readOnly)
 
         if (state.titulo.isBlank() || state.contenido.isBlank()) {
             Text(
@@ -62,28 +76,36 @@ fun BlogCreateScreen(
             )
         }
 
-        if (state.imagenUri != null) {
+        // Show image from selected blog (detail) or from current create state
+        val imagePainterSource = when {
+            readOnly -> selected?.imagenUri
+            state.imagenUri != null -> state.imagenUri
+            else -> null
+        }
+        if (imagePainterSource != null) {
             Image(
-                painter = rememberAsyncImagePainter(state.imagenUri),
-                contentDescription = "Imagen seleccionada",
+                painter = rememberAsyncImagePainter(imagePainterSource),
+                contentDescription = "Imagen",
                 modifier = Modifier.fillMaxWidth().height(160.dp),
                 contentScale = ContentScale.Crop
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { launcher.launch("image/*") }) {
-                Text("Seleccionar imagen (opcional)")
-            }
-            Spacer(Modifier.weight(1f))
-            Button(
-                enabled = state.titulo.isNotBlank() && state.contenido.isNotBlank(),
-                onClick = {
-                    viewModel.crearBlog()
-                    onSaved()
+        if (!readOnly) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = { launcher.launch("image/*") }) {
+                    Text("Seleccionar imagen (opcional)")
                 }
-            ) {
-                Text("Publicar")
+                Spacer(Modifier.weight(1f))
+                Button(
+                    enabled = state.titulo.isNotBlank() && state.contenido.isNotBlank(),
+                    onClick = {
+                        viewModel.crearBlog()
+                        onSaved()
+                    }
+                ) {
+                    Text("Publicar")
+                }
             }
         }
     }

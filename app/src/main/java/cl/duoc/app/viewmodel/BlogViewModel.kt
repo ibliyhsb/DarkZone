@@ -1,5 +1,6 @@
 package cl.duoc.app.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
@@ -14,6 +15,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// State for the blog creation screen
+data class BlogCreateState(
+    val titulo: String = "",
+    val descripcion: String = "",
+    val contenido: String = "",
+    val imagenUri: Uri? = null
+)
+
 class BlogViewModel(private val repo: FormularioBlogsRepository, private val usuarioActual: String) : ViewModel() {
 
     private val _blogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
@@ -26,6 +35,11 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
     // Recently viewed blogs (in-memory)
     private val _recentBlogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
     val recentBlogs: StateFlow<List<FormularioBlogsEntity>> = _recentBlogs.asStateFlow()
+
+    // State for blog creation
+    private val _blogCreateState = MutableStateFlow(BlogCreateState())
+    val blogCreateState: StateFlow<BlogCreateState> = _blogCreateState.asStateFlow()
+
 
     // Sample (ejemplo) blogs to show when DB is empty
     private fun sampleBlogs(): List<FormularioBlogsEntity> = listOf(
@@ -72,6 +86,23 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
         }
     }
 
+    fun onTituloChange(titulo: String) {
+        _blogCreateState.value = _blogCreateState.value.copy(titulo = titulo)
+    }
+
+    fun onDescripcionChange(descripcion: String) {
+        _blogCreateState.value = _blogCreateState.value.copy(descripcion = descripcion)
+    }
+
+    fun onContenidoChange(contenido: String) {
+        _blogCreateState.value = _blogCreateState.value.copy(contenido = contenido)
+    }
+
+    fun onImagenUriChange(uri: Uri?) {
+        _blogCreateState.value = _blogCreateState.value.copy(imagenUri = uri)
+    }
+
+
     fun loadBlogById(id: Long) {
         viewModelScope.launch {
             if (id < 0) { // Es un blog de ejemplo (ID negativo)
@@ -98,28 +129,29 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
         _recentBlogs.value = updated.take(10)
     }
 
-    fun crearBlog(
-        titulo: String,
-        descripcion: String,
-        contenido: String,
-        imagenUri: String?
-    ) {
+    fun crearBlog() {
+        val currentState = _blogCreateState.value
+        if (currentState.titulo.isBlank() || currentState.contenido.isBlank()) {
+            return
+        }
         viewModelScope.launch {
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val fecha = dateFormat.format(Date())
                 val newId = repo.insertarBlog(
                     FormularioBlogsEntity(
-                        titulo = titulo,
-                        descripcion = descripcion,
-                        contenido = contenido,
+                        titulo = currentState.titulo,
+                        descripcion = currentState.descripcion,
+                        contenido = currentState.contenido,
                         usuarioAutor = usuarioActual,
                         fechaPublicacion = fecha,
                         esPublicado = true,
-                        imagenUri = imagenUri
+                        imagenUri = currentState.imagenUri?.toString()
                     )
                 )
-                Log.d("BlogViewModel", "Inserted blog id=$newId titulo=$titulo")
+                Log.d("BlogViewModel", "Inserted blog id=$newId titulo=${currentState.titulo}")
+                // Reset state after creation
+                _blogCreateState.value = BlogCreateState()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
