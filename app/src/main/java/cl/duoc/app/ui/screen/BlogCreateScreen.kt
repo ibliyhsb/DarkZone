@@ -5,15 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -22,13 +13,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import cl.duoc.app.viewmodel.BlogViewModel
+
 
 @Composable
 fun BlogCreateScreen(
@@ -37,6 +27,7 @@ fun BlogCreateScreen(
     blogId: Long? = null,
     readOnly: Boolean = false
 ) {
+<<<<<<< HEAD
     val state by viewModel.blogCreateState.collectAsState()
     val selected by viewModel.selectedBlog.collectAsState()
 
@@ -46,11 +37,36 @@ fun BlogCreateScreen(
             viewModel.loadBlogById(blogId)
         }
     }
+=======
+    val blog by viewModel.selectedBlog.collectAsState(initial = null)
+
+    var titulo by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
+    var contenido by remember { mutableStateOf("") }
+    var imagenUri by remember { mutableStateOf<Uri?>(null) }
+>>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: Uri? -> viewModel.onImagenUriChange(uri) }
+        onResult = { uri -> imagenUri = uri }
     )
+
+    LaunchedEffect(blogId) {
+        if (blogId != null && blogId != 0L) {
+            viewModel.loadBlogById(blogId)
+        }
+    }
+
+    LaunchedEffect(blog) {
+        if (readOnly && blog != null) {
+            blog?.let {
+                titulo = it.titulo
+                descripcion = it.descripcion
+                contenido = it.contenido
+                imagenUri = it.imagenUri?.let { Uri.parse(it) }
+            }
+        }
+    }
 
     Column(
         Modifier
@@ -59,6 +75,7 @@ fun BlogCreateScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+<<<<<<< HEAD
         val tituloText = if (readOnly) selected?.titulo ?: "" else state.titulo
         val descripcionText = if (readOnly) selected?.descripcion ?: "" else state.descripcion
         val contenidoText = if (readOnly) selected?.contenido ?: "" else state.contenido
@@ -86,6 +103,16 @@ fun BlogCreateScreen(
             Image(
                 painter = rememberAsyncImagePainter(imagePainterSource),
                 contentDescription = "Imagen",
+=======
+        OutlinedTextField(value = titulo, onValueChange = { titulo = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth(), readOnly = readOnly)
+        OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), readOnly = readOnly)
+        OutlinedTextField(value = contenido, onValueChange = { contenido = it }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), readOnly = readOnly)
+
+        if (imagenUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imagenUri),
+                contentDescription = if(readOnly) "Imagen del blog" else "Imagen seleccionada",
+>>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
                 modifier = Modifier.fillMaxWidth().height(160.dp),
                 contentScale = ContentScale.Crop
             )
@@ -98,9 +125,20 @@ fun BlogCreateScreen(
                 }
                 Spacer(Modifier.weight(1f))
                 Button(
+<<<<<<< HEAD
                     enabled = state.titulo.isNotBlank() && state.contenido.isNotBlank(),
                     onClick = {
                         viewModel.crearBlog()
+=======
+                    enabled = titulo.isNotBlank() && contenido.isNotBlank(),
+                    onClick = {
+                        viewModel.crearBlog(
+                            titulo = titulo,
+                            descripcion = descripcion,
+                            contenido = contenido,
+                            imagenUri = imagenUri?.toString()
+                        )
+>>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
                         onSaved()
                     }
                 ) {
