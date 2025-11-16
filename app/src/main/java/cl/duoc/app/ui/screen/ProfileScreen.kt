@@ -55,7 +55,7 @@ fun ProfileScreen(username: String = "usuario_demo", navController: NavControlle
 
     LaunchedEffect(state.deleteSuccess) {
         if (state.deleteSuccess && navController != null) {
-            navController.navigate(Routes.Registro) {
+            navController.navigate(Routes.REGISTRO) {
                 popUpTo(0)
             }
         }

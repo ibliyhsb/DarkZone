@@ -8,11 +8,11 @@ plugins {
 
 
 android {
-    namespace = "com.example.darkzone"
+    namespace = "cl.duoc.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.darkzone"
+        applicationId = "cl.duoc.app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
