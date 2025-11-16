@@ -226,7 +226,8 @@ private fun DrawerScaffold(
                         scope.launch {
                             drawerState.close()
                             navController.navigate(Routes.LOGIN) {
-                                popUpTo(0)
+                                popUpTo("main_shell") { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
                     },
