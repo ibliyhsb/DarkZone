@@ -21,7 +21,6 @@ import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import cl.duoc.app.ui.screen.BlogCreateScreen
 import cl.duoc.app.ui.screen.BlogScreen
-import cl.duoc.app.ui.screen.FormularioServicioScreen
 import cl.duoc.app.ui.screen.HistoryScreen
 import cl.duoc.app.ui.screen.FormularioRegistroScreen
 import cl.duoc.app.ui.screen.StartScreen
@@ -40,16 +39,12 @@ object Routes {
     const val Login = "login"
     const val Registro = "registro"
     const val Start = "start"
-    const val Form = "form"
     const val History = "historias"
     const val Blogs = "blogs"
     const val BlogCreate = "blog_create"
-    const val Favorites = "favoritos"
-    const val Contact = "contacto"
     const val Profile = "perfil"
     const val News = "noticias"
     const val NewsDetail = "news_detail/{id}"
-    const val RecentBlogs = "recent_blogs"
 }
 
 @Composable
@@ -92,11 +87,6 @@ fun NavBar() {
             composable(Routes.Start) { backStackEntry ->
                 DrawerScaffold(currentRoute = Routes.Start, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     StartScreen()
-                }
-            }
-            composable(Routes.Form) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.Form, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    FormularioServicioScreen()
                 }
             }
             composable(Routes.History) { backStackEntry ->
@@ -166,12 +156,8 @@ private fun DrawerScaffold(
         DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
         DrawerItem("Historias", Routes.History, Icons.Default.History),
         DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
-        DrawerItem("Blogs Recientes", Routes.RecentBlogs, Icons.Default.History),
         DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
-        DrawerItem("Favoritos", Routes.Favorites, Icons.Default.Stars),
-        DrawerItem("Contacto", Routes.Contact, Icons.Default.Help),
-        DrawerItem("Noticias", Routes.News, Icons.Default.Newspaper),
-        DrawerItem("Formulario de servicio", Routes.Form, Icons.Default.Description)
+        DrawerItem("Noticias", Routes.News, Icons.Default.Newspaper)
     )
 
     ModalNavigationDrawer(
@@ -240,14 +226,10 @@ private data class DrawerItem(val label: String, val route: String, val icon: Im
 @Composable
 private fun appBarTitle(route: String?): String = when (route) {
     Routes.Start -> "Inicio"
-    Routes.Form -> "Formulario de Servicio"
     Routes.History -> "Historias"
-    Routes.Favorites -> "Favoritos"
     Routes.Profile -> "Perfil"
     Routes.Blogs -> "Blogs"
     Routes.BlogCreate -> "Crear Blog"
-    Routes.Contact -> "Contacto"
     Routes.News -> "Noticias"
-    Routes.RecentBlogs -> "Blogs Recientes"
     else -> ""
 }
