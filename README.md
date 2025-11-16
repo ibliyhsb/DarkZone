@@ -8,6 +8,7 @@ Este proyecto fue realizado por Catalina Rojas y Alejandra Faguas.
 Funcionalidades implementadas:
 
 1.Autenticación de Usuarios:
+
 	Inicio de Sesión: Los usuarios pueden iniciar sesión con su nombre de usuario y contraseña.
 	Registro: Los nuevos usuarios pueden registrarse proporcionando un nombre de usuario, correo electrónico y contraseña.
 
