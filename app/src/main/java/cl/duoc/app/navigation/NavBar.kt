@@ -47,7 +47,6 @@ object Routes {
     const val BLOG_DETAIL = "blog_detail/{blogId}"
 }
 
-@Suppress("UnrememberedGetBackStackEntry")
 @Composable
 fun NavBar() {
     val nav = rememberNavController()
@@ -59,9 +58,8 @@ fun NavBar() {
             val context = LocalContext.current
             val db = remember(context) { AppDatabase.getDatabase(context) }
             val repo = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val entry = remember(nav.getBackStackEntry(Routes.LOGIN)) { nav.getBackStackEntry(Routes.LOGIN) }
-            val loginFactory = remember(repo, entry) { LoginViewModelFactory(entry, repo) }
-            val loginVm: LoginViewModel = viewModel(viewModelStoreOwner = entry, factory = loginFactory)
+            val loginFactory = remember(repo) { LoginViewModelFactory(repo) }
+            val loginVm: LoginViewModel = viewModel(factory = loginFactory)
 
             LoginScreen(
                 viewModel = loginVm,
@@ -200,12 +198,13 @@ private fun DrawerScaffold(
                 Text(
                     "Menú",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.primary
                 )
                 destinations.forEach { item ->
                     NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
+                        icon = { Icon(item.icon, contentDescription = item.label, tint = MaterialTheme.colorScheme.primary) },
+                        label = { Text(item.label, color = MaterialTheme.colorScheme.primary) },
                         selected = currentRoute == item.route,
                         onClick = {
                             scope.launch { drawerState.close() }
@@ -213,25 +212,35 @@ private fun DrawerScaffold(
                                 onNavigate(item.route)
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            selectedIconColor = MaterialTheme.colorScheme.primary
+                        )
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Divider()
                 NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Logout, contentDescription = "Cerrar Sesión") },
-                    label = { Text("Cerrar Sesión") },
+                    icon = { Icon(Icons.Default.Logout, contentDescription = "Cerrar Sesión", tint = MaterialTheme.colorScheme.primary) },
+                    label = { Text("Cerrar Sesión", color = MaterialTheme.colorScheme.primary) },
                     selected = false,
                     onClick = {
                         scope.launch {
                             drawerState.close()
                             navController.navigate(Routes.LOGIN) {
-                                popUpTo("main_shell") { inclusive = true }
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 launchSingleTop = true
                             }
                         }
                     },
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         }

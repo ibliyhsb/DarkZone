@@ -135,7 +135,7 @@ fun ProfileScreen(username: String = "usuario_demo", navController: NavControlle
             Button(
                 onClick = { viewModel.onDeleteRequest() },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Eliminar cuenta")
             }

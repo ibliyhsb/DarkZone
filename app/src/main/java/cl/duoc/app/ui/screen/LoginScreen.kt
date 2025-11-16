@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.ui.components.InputText
 import cl.duoc.app.viewmodel.LoginViewModel
 import cl.duoc.app.viewmodel.LoginViewModelFactory
 
@@ -69,36 +68,28 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = estado.user,
-                onValueChange = viewModel::onUserChange,
-                label = { Text("Nombre de usuario") },
+            InputText(
+                valor = estado.user,
+                onChange = viewModel::onUserChange,
+                label = "Nombre de usuario",
                 modifier = Modifier.fillMaxWidth(),
-                isError = estado.error != null
+                error = estado.error
             )
 
             Spacer(Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = estado.pass,
-                onValueChange = viewModel::onPassChange,
-                label = { Text("Contraseña") },
+            InputText(
+                valor = estado.pass,
+                onChange = viewModel::onPassChange,
+                label = "Contraseña",
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (pwVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions.Default,
                 trailingIcon = {
                     TextButton(onClick = { pwVisible = !pwVisible }) {
                         Text(if (pwVisible) "Ocultar" else "Mostrar")
                     }
                 },
-                isError = estado.error != null,
-                supportingText = {
-                    estado.error?.let {
-                        if (!estado.isLoading) {
-                            Text(it, color = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                }
+                error = estado.error
             )
 
             Spacer(Modifier.height(16.dp))
