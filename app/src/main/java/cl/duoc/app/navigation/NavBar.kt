@@ -79,7 +79,10 @@ fun NavBar() {
         }
 
         navigation(startDestination = Routes.START, route = "main_shell") {
-            composable(Routes.START) {
+            composable(Routes.START) { backStackEntry ->
+                val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
+                val newsEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
+                val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
                 DrawerScaffold(
                     currentRoute = Routes.START,
                     onNavigate = { route -> nav.navigate(route) },
@@ -87,7 +90,7 @@ fun NavBar() {
                     scope = scope,
                     navController = nav
                 ) {
-                    StartScreen()
+                    StartScreen(blogViewModel = blogVm, newsViewModel = newsVm)
                 }
             }
             composable(Routes.BLOGS) { backStackEntry ->
