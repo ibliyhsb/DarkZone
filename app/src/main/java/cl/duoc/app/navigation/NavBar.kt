@@ -21,7 +21,6 @@ import cl.duoc.app.model.data.config.AppDatabase
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import cl.duoc.app.ui.screen.BlogCreateScreen
 import cl.duoc.app.ui.screen.BlogScreen
-import cl.duoc.app.ui.screen.HistoryScreen
 import cl.duoc.app.ui.screen.FormularioRegistroScreen
 import cl.duoc.app.ui.screen.StartScreen
 import cl.duoc.app.ui.screen.LoginScreen
@@ -39,7 +38,6 @@ object Routes {
     const val Login = "login"
     const val Registro = "registro"
     const val Start = "start"
-    const val History = "historias"
     const val Blogs = "blogs"
     const val BlogCreate = "blog_create"
     const val Profile = "perfil"
@@ -87,11 +85,6 @@ fun NavBar() {
             composable(Routes.Start) { backStackEntry ->
                 DrawerScaffold(currentRoute = Routes.Start, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
                     StartScreen()
-                }
-            }
-            composable(Routes.History) { backStackEntry ->
-                DrawerScaffold(currentRoute = Routes.History, onNavigate = { route -> nav.navigate(route) }, drawerState = drawerState, scope = scope, navController = nav) {
-                    HistoryScreen()
                 }
             }
             composable(Routes.Blogs) { backStackEntry ->
@@ -154,7 +147,6 @@ private fun DrawerScaffold(
 ) {
     val destinations = listOf(
         DrawerItem("Inicio", Routes.Start, Icons.Default.Home),
-        DrawerItem("Historias", Routes.History, Icons.Default.History),
         DrawerItem("Blogs", Routes.Blogs, Icons.Default.Book),
         DrawerItem("Perfil", Routes.Profile, Icons.Default.SupervisedUserCircle),
         DrawerItem("Noticias", Routes.News, Icons.Default.Newspaper)
@@ -226,7 +218,6 @@ private data class DrawerItem(val label: String, val route: String, val icon: Im
 @Composable
 private fun appBarTitle(route: String?): String = when (route) {
     Routes.Start -> "Inicio"
-    Routes.History -> "Historias"
     Routes.Profile -> "Perfil"
     Routes.Blogs -> "Blogs"
     Routes.BlogCreate -> "Crear Blog"
