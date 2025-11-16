@@ -46,6 +46,7 @@ object Routes {
     fun blogDetail(blogId: Long) = "blog_detail/$blogId"
 }
 
+@Suppress("UnrememberedGetBackStackEntry")
 @Composable
 fun NavBar() {
     val nav = rememberNavController()
@@ -57,7 +58,7 @@ fun NavBar() {
             val context = LocalContext.current
             val db = remember(context) { AppDatabase.getDatabase(context) }
             val repo = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val entry = remember { nav.getBackStackEntry(Routes.Login) }
+            val entry = remember(nav.getBackStackEntry(Routes.Login)) { nav.getBackStackEntry(Routes.Login) }
             val loginFactory = remember(repo, entry) { LoginViewModelFactory(entry, repo) }
             val loginVm: LoginViewModel = viewModel(viewModelStoreOwner = entry, factory = loginFactory)
 
@@ -178,8 +179,8 @@ fun NavBar() {
                     ContactScreen()
                 }
             }
-            composable(Routes.News) {
-                    val newsEntry = remember { nav.getBackStackEntry("main_shell") }
+                composable(Routes.News) {
+                    val newsEntry = remember(nav.getBackStackEntry("main_shell")) { nav.getBackStackEntry("main_shell") }
                     val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
                 DrawerScaffold(
                     onNavigate = { nav.navigate(it) },

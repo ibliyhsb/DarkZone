@@ -27,7 +27,6 @@ fun BlogCreateScreen(
     blogId: Long? = null,
     readOnly: Boolean = false
 ) {
-<<<<<<< HEAD
     val state by viewModel.blogCreateState.collectAsState()
     val selected by viewModel.selectedBlog.collectAsState()
 
@@ -37,34 +36,23 @@ fun BlogCreateScreen(
             viewModel.loadBlogById(blogId)
         }
     }
-=======
-    val blog by viewModel.selectedBlog.collectAsState(initial = null)
 
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var contenido by remember { mutableStateOf("") }
     var imagenUri by remember { mutableStateOf<Uri?>(null) }
->>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri -> imagenUri = uri }
     )
 
-    LaunchedEffect(blogId) {
-        if (blogId != null && blogId != 0L) {
-            viewModel.loadBlogById(blogId)
-        }
-    }
-
-    LaunchedEffect(blog) {
-        if (readOnly && blog != null) {
-            blog?.let {
-                titulo = it.titulo
-                descripcion = it.descripcion
-                contenido = it.contenido
-                imagenUri = it.imagenUri?.let { Uri.parse(it) }
-            }
+    LaunchedEffect(selected) {
+        selected?.let {
+            titulo = it.titulo
+            descripcion = it.descripcion
+            contenido = it.contenido
+            imagenUri = it.imagenUri?.let { Uri.parse(it) }
         }
     }
 
@@ -75,70 +63,92 @@ fun BlogCreateScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-<<<<<<< HEAD
-        val tituloText = if (readOnly) selected?.titulo ?: "" else state.titulo
-        val descripcionText = if (readOnly) selected?.descripcion ?: "" else state.descripcion
-        val contenidoText = if (readOnly) selected?.contenido ?: "" else state.contenido
-
-        OutlinedTextField(value = tituloText, onValueChange = { if (!readOnly) viewModel.onTituloChange(it) }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth(), enabled = !readOnly)
-        OutlinedTextField(value = descripcionText, onValueChange = { if (!readOnly) viewModel.onDescripcionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), enabled = !readOnly)
-        OutlinedTextField(value = contenidoText, onValueChange = { if (!readOnly) viewModel.onContenidoChange(it) }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), enabled = !readOnly)
-
-        if (state.titulo.isBlank() || state.contenido.isBlank()) {
-            Text(
-                text = "El título y el contenido son obligatorios para publicar.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
+        if (readOnly) {
+            OutlinedTextField(
+                value = selected?.titulo ?: "",
+                onValueChange = {},
+                label = { Text("Título") },
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true
             )
-        }
 
-        // Show image from selected blog (detail) or from current create state
-        val imagePainterSource = when {
-            readOnly -> selected?.imagenUri
-            state.imagenUri != null -> state.imagenUri
-            else -> null
-        }
-        if (imagePainterSource != null) {
-            Image(
-                painter = rememberAsyncImagePainter(imagePainterSource),
-                contentDescription = "Imagen",
-=======
-        OutlinedTextField(value = titulo, onValueChange = { titulo = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth(), readOnly = readOnly)
-        OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), readOnly = readOnly)
-        OutlinedTextField(value = contenido, onValueChange = { contenido = it }, label = { Text("Texto del blog") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), readOnly = readOnly)
-
-        if (imagenUri != null) {
-            Image(
-                painter = rememberAsyncImagePainter(imagenUri),
-                contentDescription = if(readOnly) "Imagen del blog" else "Imagen seleccionada",
->>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
-                modifier = Modifier.fillMaxWidth().height(160.dp),
-                contentScale = ContentScale.Crop
+            OutlinedTextField(
+                value = selected?.descripcion ?: "",
+                onValueChange = {},
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true
             )
-        }
 
-        if (!readOnly) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = selected?.contenido ?: "",
+                onValueChange = {},
+                label = { Text("Texto del blog") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp),
+                readOnly = true
+            )
+
+            selected?.imagenUri?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(Uri.parse(it)),
+                    contentDescription = "Imagen del blog",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        } else {
+            OutlinedTextField(
+                value = titulo,
+                onValueChange = { titulo = it },
+                label = { Text("Título") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = contenido,
+                onValueChange = { contenido = it },
+                label = { Text("Texto del blog") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp)
+            )
+
+            imagenUri?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(it),
+                    contentDescription = "Imagen seleccionada",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 Button(onClick = { launcher.launch("image/*") }) {
                     Text("Seleccionar imagen (opcional)")
                 }
                 Spacer(Modifier.weight(1f))
                 Button(
-<<<<<<< HEAD
-                    enabled = state.titulo.isNotBlank() && state.contenido.isNotBlank(),
-                    onClick = {
-                        viewModel.crearBlog()
-=======
                     enabled = titulo.isNotBlank() && contenido.isNotBlank(),
                     onClick = {
-                        viewModel.crearBlog(
-                            titulo = titulo,
-                            descripcion = descripcion,
-                            contenido = contenido,
-                            imagenUri = imagenUri?.toString()
-                        )
->>>>>>> 9bea06fa16e55d3e5f2a079aea1e537fe9cada0c
+                        // Actualizar el estado en el ViewModel antes de crear
+                        viewModel.onTituloChange(titulo)
+                        viewModel.onDescripcionChange(descripcion)
+                        viewModel.onContenidoChange(contenido)
+                        viewModel.onImagenUriChange(imagenUri)
+                        viewModel.crearBlog()
                         onSaved()
                     }
                 ) {
