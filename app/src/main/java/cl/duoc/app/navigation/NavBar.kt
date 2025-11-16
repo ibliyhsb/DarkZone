@@ -73,6 +73,11 @@ fun NavBar() {
                 onNavigateToRegistro = { nav.navigate(Routes.Registro) }
             )
         }
+        composable(Routes.Registro) {
+            FormularioRegistroScreen(onNavigateToLogin = {
+                nav.navigate(Routes.Login)
+            })
+        }
 
         navigation(startDestination = Routes.Start, route = "main_shell") { 
             composable(Routes.Start) {
