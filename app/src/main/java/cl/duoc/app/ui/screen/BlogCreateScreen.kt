@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -56,6 +58,11 @@ fun BlogCreateScreen(
         }
     }
 
+    var showConfirmDelete by remember { mutableStateOf(false) }
+    var isEditing by remember { mutableStateOf(false) }
+
+    val effectiveReadOnly = readOnly && !isEditing
+
     Column(
         Modifier
             .fillMaxSize()
@@ -63,7 +70,7 @@ fun BlogCreateScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (readOnly) {
+        if (effectiveReadOnly) {
             OutlinedTextField(
                 value = selected?.titulo ?: "",
                 onValueChange = {},
@@ -98,6 +105,43 @@ fun BlogCreateScreen(
                         .fillMaxWidth()
                         .height(160.dp),
                     contentScale = ContentScale.Crop
+                )
+            }
+
+            // Mostrar acciones solo para el autor
+            selected?.let { blog ->
+                if (blog.usuarioAutor == viewModel.usuarioActual) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = { isEditing = true }) {
+                            Text("Editar")
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Button(onClick = { showConfirmDelete = true }) {
+                            Text("Eliminar")
+                        }
+                    }
+                }
+            }
+
+            if (showConfirmDelete) {
+                AlertDialog(
+                    onDismissRequest = { showConfirmDelete = false },
+                    title = { Text("Confirmar eliminación") },
+                    text = { Text("¿Estás seguro de que deseas eliminar este blog? Esta acción no se puede deshacer.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showConfirmDelete = false
+                            // Realizar eliminación en ViewModel y volver atrás
+                            viewModel.deleteSelectedBlog(onDeleted = { onSaved() })
+                        }) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showConfirmDelete = false }) {
+                            Text("Cancelar")
+                        }
+                    }
                 )
             }
         } else {
@@ -148,7 +192,12 @@ fun BlogCreateScreen(
                         viewModel.onDescripcionChange(descripcion)
                         viewModel.onContenidoChange(contenido)
                         viewModel.onImagenUriChange(imagenUri)
-                        viewModel.crearBlog()
+                        if (blogId != null) {
+                            // Edición de un blog existente
+                            viewModel.updateSelectedBlog(titulo, descripcion, contenido, imagenUri?.toString())
+                        } else {
+                            viewModel.crearBlog()
+                        }
                         onSaved()
                     }
                 ) {

@@ -23,7 +23,7 @@ data class BlogCreateState(
     val imagenUri: Uri? = null
 )
 
-class BlogViewModel(private val repo: FormularioBlogsRepository, private val usuarioActual: String) : ViewModel() {
+class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActual: String) : ViewModel() {
 
     private val _blogs = MutableStateFlow<List<FormularioBlogsEntity>>(emptyList())
     val blogs: StateFlow<List<FormularioBlogsEntity>> = _blogs.asStateFlow()
@@ -152,6 +152,43 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, private val usu
                 Log.d("BlogViewModel", "Inserted blog id=$newId titulo=${currentState.titulo}")
                 // Reset state after creation
                 _blogCreateState.value = BlogCreateState()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateSelectedBlog(titulo: String, descripcion: String, contenido: String, imagenUri: String?) {
+        val current = _selectedBlog.value ?: return
+        // Solo el autor puede actualizar
+        if (current.usuarioAutor != usuarioActual) return
+        val updated = current.copy(
+            titulo = titulo,
+            descripcion = descripcion,
+            contenido = contenido,
+            imagenUri = imagenUri
+        )
+        viewModelScope.launch {
+            try {
+                repo.updateBlog(updated)
+                // Refrescar seleccionado y lista
+                _selectedBlog.value = updated
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun deleteSelectedBlog(onDeleted: (() -> Unit)? = null) {
+        val current = _selectedBlog.value ?: return
+        // Solo el autor puede eliminar
+        if (current.usuarioAutor != usuarioActual) return
+        viewModelScope.launch {
+            try {
+                repo.deleteBlog(current)
+                // Limpiar seleccionado
+                _selectedBlog.value = null
+                onDeleted?.invoke()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
