@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import cl.duoc.app.network.ApiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class RegistroViewModel(private val registroRepository: FormularioUsuarioRepository) : ViewModel(){
 
@@ -76,7 +79,13 @@ class RegistroViewModel(private val registroRepository: FormularioUsuarioReposit
                 correoUsuario = ui.correoUsuario,
                 passwordUsuario = ui.passwordUsuario
             )
-            val errorMessage = registroRepository.guardarFormulario(entity)
+            // Crea en backend
+            val response = withContext(Dispatchers.IO) { ApiClient.userApiService.createUser(entity) }
+            val errorMessage = if (response.isSuccessful && response.body() != null) {
+                registroRepository.guardarFormulario(response.body()!!)
+            } else {
+                registroRepository.guardarFormulario(entity)
+            }
             if (errorMessage == null) {
                 _estado.update { it.copy(registroExitoso = true) }
             } else {

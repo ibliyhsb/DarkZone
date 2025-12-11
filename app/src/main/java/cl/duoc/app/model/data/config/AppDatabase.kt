@@ -10,16 +10,19 @@ import cl.duoc.app.model.data.dao.FormularioBlogsDao
 import cl.duoc.app.model.data.dao.FormularioUsuarioDao
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.entities.FormularioUsuarioEntity
+import cl.duoc.app.model.data.entities.NewsEntity
+import cl.duoc.app.model.data.dao.NewsDao
 
 @Database(
-    entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class],
-    version = 6, // Incremented version from 5 to 6
+    entities = [FormularioUsuarioEntity::class, FormularioBlogsEntity::class, NewsEntity::class],
+    version = 7, // Incremented version for NewsEntity
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun formularioUsuarioDao(): FormularioUsuarioDao
     abstract fun formularioBlogsDao(): FormularioBlogsDao
+    abstract fun newsDao(): NewsDao
 
     companion object {
         @Volatile
@@ -45,35 +48,25 @@ abstract class AppDatabase : RoomDatabase() {
         // Migration from version 5 to 6 - Remove foreign key constraint
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // Create a new table without the foreign key constraint
+                // ...existing code...
+            }
+        }
+
+        // Migration from version 6 to 7 - Add NewsEntity table
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("""
-                    CREATE TABLE IF NOT EXISTS formulario_blog_new (
+                    CREATE TABLE IF NOT EXISTS newsentity (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         titulo TEXT NOT NULL,
                         descripcion TEXT NOT NULL DEFAULT '',
                         contenido TEXT NOT NULL,
-                        usuario_autor TEXT NOT NULL,
+                        autor TEXT NOT NULL,
                         fechaPublicacion TEXT NOT NULL,
                         esPublicado INTEGER NOT NULL DEFAULT 0,
                         imagenUri TEXT
                     )
-                """.trimIndent())
-                
-                // Copy data from old table to new table
-                database.execSQL("""
-                    INSERT INTO formulario_blog_new (id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri)
-                    SELECT id, titulo, descripcion, contenido, usuario_autor, fechaPublicacion, esPublicado, imagenUri
-                    FROM formulario_blog
-                """.trimIndent())
-                
-                // Drop the old table
-                database.execSQL("DROP TABLE formulario_blog")
-                
-                // Rename the new table to the old table name
-                database.execSQL("ALTER TABLE formulario_blog_new RENAME TO formulario_blog")
-                
-                // Recreate the index
-                database.execSQL("CREATE INDEX IF NOT EXISTS index_formulario_blog_usuario_autor ON formulario_blog(usuario_autor)")
+                """)
             }
         }
 
@@ -84,7 +77,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6) // Add all migrations
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7) // Add all migrations
                     .build()
                 INSTANCE = instance
                 instance

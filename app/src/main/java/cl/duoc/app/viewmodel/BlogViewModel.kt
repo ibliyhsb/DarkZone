@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import cl.duoc.app.network.ApiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,20 +71,28 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
     init {
         viewModelScope.launch {
             try {
+                // 1. Intenta cargar del backend y guardar en Room
+                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.getBlogs() }
+                if (response.isSuccessful && response.body() != null) {
+                    val remoteBlogs = response.body()!!
+                    // Limpia y guarda en Room
+                    remoteBlogs.forEach { repo.insertarBlog(it) }
+                }
+            } catch (e: Exception) {
+                Log.e("BlogViewModel", "Error sincronizando con backend", e)
+            }
+            // Siempre observa Room
+            try {
                 repo.getBlogs().collectLatest { list ->
-                    Log.d("BlogViewModel", "getBlogs emitted size=${list.size} ids=${list.map { it.id }}")
                     if (list.isEmpty()) {
-                        // Si la DB está vacía, mostrar ejemplos en memoria
                         _blogs.value = sampleBlogs()
-                        Log.d("BlogViewModel", "Using sample blogs: ${_blogs.value.map { it.id }}")
                     } else {
                         _blogs.value = list
                     }
                 }
             } catch (e: Exception) {
-                // Log the error or handle it appropriately
                 e.printStackTrace()
-                _blogs.value = sampleBlogs() // Muestra los blogs de ejemplo si hay un error
+                _blogs.value = sampleBlogs()
             }
         }
     }
@@ -138,19 +149,25 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val fecha = dateFormat.format(Date())
-                val newId = repo.insertarBlog(
-                    FormularioBlogsEntity(
-                        titulo = currentState.titulo,
-                        descripcion = currentState.descripcion,
-                        contenido = currentState.contenido,
-                        usuarioAutor = usuarioActual,
-                        fechaPublicacion = fecha,
-                        esPublicado = true,
-                        imagenUri = currentState.imagenUri?.toString()
-                    )
+                val blog = FormularioBlogsEntity(
+                    titulo = currentState.titulo,
+                    descripcion = currentState.descripcion,
+                    contenido = currentState.contenido,
+                    usuarioAutor = usuarioActual,
+                    fechaPublicacion = fecha,
+                    esPublicado = true,
+                    imagenUri = currentState.imagenUri?.toString()
                 )
-                Log.d("BlogViewModel", "Inserted blog id=$newId titulo=${currentState.titulo}")
-                // Reset state after creation
+                // 1. Crea en backend
+                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.createBlog(blog) }
+                if (response.isSuccessful && response.body() != null) {
+                    // 2. Guarda en Room con el id del backend
+                    repo.insertarBlog(response.body()!!)
+                } else {
+                    // Si falla el backend, igual guarda local
+                    repo.insertarBlog(blog)
+                }
+                Log.d("BlogViewModel", "Inserted blog (backend+local) titulo=${currentState.titulo}")
                 _blogCreateState.value = BlogCreateState()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -160,7 +177,6 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
 
     fun updateSelectedBlog(titulo: String, descripcion: String, contenido: String, imagenUri: String?) {
         val current = _selectedBlog.value ?: return
-        // Solo el autor puede actualizar
         if (current.usuarioAutor != usuarioActual) return
         val updated = current.copy(
             titulo = titulo,
@@ -170,8 +186,13 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
         )
         viewModelScope.launch {
             try {
-                repo.updateBlog(updated)
-                // Refrescar seleccionado y lista
+                // 1. Actualiza en backend
+                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.updateBlog(updated.id, updated) }
+                if (response.isSuccessful && response.body() != null) {
+                    repo.updateBlog(response.body()!!)
+                } else {
+                    repo.updateBlog(updated)
+                }
                 _selectedBlog.value = updated
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -181,12 +202,13 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
 
     fun deleteSelectedBlog(onDeleted: (() -> Unit)? = null) {
         val current = _selectedBlog.value ?: return
-        // Solo el autor puede eliminar
         if (current.usuarioAutor != usuarioActual) return
         viewModelScope.launch {
             try {
+                // 1. Elimina en backend
+                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.deleteBlog(current.id) }
+                // 2. Elimina local siempre
                 repo.deleteBlog(current)
-                // Limpiar seleccionado
                 _selectedBlog.value = null
                 onDeleted?.invoke()
             } catch (e: Exception) {

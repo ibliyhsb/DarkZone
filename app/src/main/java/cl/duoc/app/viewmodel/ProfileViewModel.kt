@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import cl.duoc.app.network.ApiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class ProfileUIState(
     val nombreUsuario: String = "",
@@ -28,6 +31,15 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
 
     init {
         viewModelScope.launch {
+            try {
+                // Sincroniza usuarios del backend a Room
+                val response = withContext(Dispatchers.IO) { ApiClient.userApiService.getUsers() }
+                if (response.isSuccessful && response.body() != null) {
+                    response.body()!!.forEach { repository.guardarFormulario(it) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             val user = repository.findByUsername(username)
             user?.let {
                 _state.value = ProfileUIState(
@@ -62,7 +74,13 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
                     correoUsuario = currentState.correoUsuario,
                     passwordUsuario = currentState.passwordUsuario
                 )
-                repository.updateUser(user)
+                // Actualiza en backend
+                val response = withContext(Dispatchers.IO) { ApiClient.userApiService.updateUser(user.id, user) }
+                if (response.isSuccessful && response.body() != null) {
+                    repository.updateUser(response.body()!!)
+                } else {
+                    repository.updateUser(user)
+                }
                 _state.update { it.copy(updateSuccess = true) }
             } catch (e: Exception) {
                 val errorMessage = when {
@@ -91,8 +109,15 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
                 correoUsuario = _state.value.correoUsuario,
                 passwordUsuario = _state.value.passwordUsuario
             )
-            repository.deleteUser(user)
-            _state.update { it.copy(deleteSuccess = true, showConfirmDialog = false) }
+            try {
+                val response = withContext(Dispatchers.IO) { ApiClient.userApiService.deleteUser(user.id) }
+                // Elimina local siempre
+                repository.deleteUser(user)
+                _state.update { it.copy(deleteSuccess = true, showConfirmDialog = false) }
+            } catch (e: Exception) {
+                repository.deleteUser(user)
+                _state.update { it.copy(deleteSuccess = true, showConfirmDialog = false) }
+            }
         }
     }
 

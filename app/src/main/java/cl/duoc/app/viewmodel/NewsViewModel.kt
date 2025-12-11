@@ -6,31 +6,65 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import cl.duoc.app.model.data.entities.NewsEntity
+import cl.duoc.app.model.data.repository.NewsRepository
+import cl.duoc.app.network.ApiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-// Simple data model for an article
-data class NewsArticle(
-    val id: Int,
-    val title: String,
-    val source: String,
-    val content: String,
-    val url: String?
-)
-
-class NewsViewModel : ViewModel() {
-
-    private val _articles = MutableStateFlow<List<NewsArticle>>(emptyList())
-    val articles: StateFlow<List<NewsArticle>> = _articles.asStateFlow()
+class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
+    private val _news = MutableStateFlow<List<NewsEntity>>(emptyList())
+    val news: StateFlow<List<NewsEntity>> = _news.asStateFlow()
 
     init {
-        // Load mock data for now. This can be replaced with a network call later.
         viewModelScope.launch {
-            _articles.value = listOf(
-                NewsArticle(0, "La casa embrujada: nueva adaptación cinematográfica", "Fuente CineTerror", "Detalle de la noticia 1...", "https://example.com/nota1"),
-                NewsArticle(1, "Antología de cuentos góticos reeditada", "Fuente Literatura", "Detalle de la noticia 2...", "https://example.com/nota2"),
-                NewsArticle(2, "Festival de cine de terror abre sus puertas", "Fuente Eventos", "Detalle de la noticia 3...", null)
-            )
+            try {
+                // Sincroniza noticias del backend a Room
+                val response = withContext(Dispatchers.IO) { ApiClient.newsApiService.getNews() }
+                if (response.isSuccessful && response.body() != null) {
+                    response.body()!!.forEach { repository.insertNews(it) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            repository.getNews().collect { list ->
+                _news.value = list
+            }
         }
     }
 
-    fun getArticleById(id: Int?): NewsArticle? = articles.value.firstOrNull { it.id == id }
+    suspend fun createNews(news: NewsEntity) {
+        try {
+            val response = withContext(Dispatchers.IO) { ApiClient.newsApiService.createNews(news) }
+            if (response.isSuccessful && response.body() != null) {
+                repository.insertNews(response.body()!!)
+            } else {
+                repository.insertNews(news)
+            }
+        } catch (e: Exception) {
+            repository.insertNews(news)
+        }
+    }
+
+    suspend fun updateNews(news: NewsEntity) {
+        try {
+            val response = withContext(Dispatchers.IO) { ApiClient.newsApiService.updateNews(news.id, news) }
+            if (response.isSuccessful && response.body() != null) {
+                repository.updateNews(response.body()!!)
+            } else {
+                repository.updateNews(news)
+            }
+        } catch (e: Exception) {
+            repository.updateNews(news)
+        }
+    }
+
+    suspend fun deleteNews(news: NewsEntity) {
+        try {
+            val response = withContext(Dispatchers.IO) { ApiClient.newsApiService.deleteNews(news.id) }
+            repository.deleteNews(news)
+        } catch (e: Exception) {
+            repository.deleteNews(news)
+        }
+    }
 }
