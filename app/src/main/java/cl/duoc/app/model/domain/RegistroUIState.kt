@@ -5,5 +5,7 @@ package cl.duoc.app.model.domain
         val correoUsuario: String = "",
         val passwordUsuario: String = "",
         val errores: FormularioRegistroErrores = FormularioRegistroErrores(),
-        val registroExitoso: Boolean = false
+        val registroExitoso: Boolean = false,
+        val isLoading: Boolean = false,
+        val mensajeExito: String = ""
     )

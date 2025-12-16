@@ -19,13 +19,13 @@ data class FormularioUsuarioEntity(
     val id: Long = 0,
 
     @ColumnInfo(name = "nombre_usuario")
-    @SerializedName("username")
+    @SerializedName("nombreUsuario")
     val nombreUsuario: String,
 
     @ColumnInfo(name = "correo_usuario")
-    @SerializedName("email")
+    @SerializedName("correoUsuario")
     val correoUsuario: String,
 
-    @SerializedName("password")
+    @SerializedName("passwordUsuario")
     val passwordUsuario: String
 )

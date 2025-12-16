@@ -9,7 +9,10 @@ import cl.duoc.app.viewmodel.GNewsViewModel
 import cl.duoc.app.network.GNewsArticle
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun TerrorNewsScreen() {

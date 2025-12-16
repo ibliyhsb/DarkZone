@@ -13,9 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.rememberCoroutineScope
 import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.model.data.repository.NewsRepository
 import cl.duoc.app.viewmodel.LoginViewModel
 import cl.duoc.app.viewmodel.LoginViewModelFactory
 import cl.duoc.app.viewmodel.NewsViewModel
+import cl.duoc.app.viewmodel.NewsViewModelFactory
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -63,8 +65,8 @@ fun NavBar() {
 
             LoginScreen(
                 viewModel = loginVm,
-                onAuthenticated = {
-                    nav.navigate("main_shell") { // Navigate to the nested graph
+                onAuthenticated = { nombreUsuario ->
+                    nav.navigate("main_shell/$nombreUsuario") { // Navigate to the nested graph with username
                         popUpTo(Routes.LOGIN) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -78,11 +80,16 @@ fun NavBar() {
             })
         }
 
-        navigation(startDestination = Routes.START, route = "main_shell") {
+        navigation(startDestination = Routes.START, route = "main_shell/{nombreUsuario}", arguments = listOf(navArgument("nombreUsuario") { type = NavType.StringType })) {
             composable(Routes.START) { backStackEntry ->
+                val context = LocalContext.current
+                val db = remember(context) { AppDatabase.getDatabase(context) }
+                val newsRepo = remember(db) { NewsRepository(db.newsDao()) }
+                val newsFactory = remember(newsRepo) { NewsViewModelFactory(newsRepo) }
+                
                 val blogVm = getSharedBlogViewModel(backStackEntry = backStackEntry, nav = nav)
-                val newsEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
-                val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
+                val newsEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{nombreUsuario}") }
+                val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry, factory = newsFactory)
                 DrawerScaffold(
                     currentRoute = Routes.START,
                     onNavigate = { route -> nav.navigate(route) },
@@ -151,8 +158,13 @@ fun NavBar() {
                 }
             }
                 composable(Routes.NEWS) {
-                    val newsEntry = remember(nav.getBackStackEntry("main_shell")) { nav.getBackStackEntry("main_shell") }
-                    val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry)
+                    val context = LocalContext.current
+                    val db = remember(context) { AppDatabase.getDatabase(context) }
+                    val newsRepo = remember(db) { NewsRepository(db.newsDao()) }
+                    val newsFactory = remember(newsRepo) { NewsViewModelFactory(newsRepo) }
+                    
+                    val newsEntry = remember(nav.getBackStackEntry("main_shell/{nombreUsuario}")) { nav.getBackStackEntry("main_shell/{nombreUsuario}") }
+                    val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry, factory = newsFactory)
                 DrawerScaffold(
                     currentRoute = Routes.NEWS,
                     onNavigate = { route -> nav.navigate(route) },
@@ -169,11 +181,12 @@ fun NavBar() {
 
 @Composable
 private fun getSharedBlogViewModel(backStackEntry: NavBackStackEntry, nav: NavController): BlogViewModel {
-    val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell") }
+    val parentEntry = remember(backStackEntry) { nav.getBackStackEntry("main_shell/{nombreUsuario}") }
+    val nombreUsuario = parentEntry.arguments?.getString("nombreUsuario") ?: "usuario_demo"
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.getDatabase(context) }
     val repo = remember(db) { FormularioBlogsRepository(db.formularioBlogsDao()) }
-    val factory = remember(repo) { BlogViewModelFactory(parentEntry, repo) }
+    val factory = remember(repo, nombreUsuario) { BlogViewModelFactory(parentEntry, repo, nombreUsuario) }
     return viewModel(viewModelStoreOwner = parentEntry, factory = factory)
 }
 

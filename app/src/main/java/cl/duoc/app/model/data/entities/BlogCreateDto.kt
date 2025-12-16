@@ -1,22 +1,19 @@
 package cl.duoc.app.model.data.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "news")
-data class NewsEntity(
-    @PrimaryKey(autoGenerate = true)
-    @SerializedName("id")
-    val id: Long = 0,
+/**
+ * DTO para crear un blog nuevo (sin campo id)
+ */
+data class BlogCreateDto(
     @SerializedName("titulo")
     val titulo: String,
     @SerializedName("descripcion")
     val descripcion: String = "",
     @SerializedName("contenido")
     val contenido: String,
-    @SerializedName("autor")
-    val autor: String,
+    @SerializedName("usuarioAutor")
+    val usuarioAutor: String,
     @SerializedName("fechaPublicacion")
     val fechaPublicacion: String,
     @SerializedName("esPublicado")

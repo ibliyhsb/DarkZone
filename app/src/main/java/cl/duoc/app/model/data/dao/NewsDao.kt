@@ -15,9 +15,9 @@ interface NewsDao {
     @Delete
     suspend fun deleteNews(news: NewsEntity)
 
-    @Query("SELECT * FROM newsentity ORDER BY fechaPublicacion DESC")
+    @Query("SELECT * FROM news ORDER BY fechaPublicacion DESC")
     fun getNews(): Flow<List<NewsEntity>>
 
-    @Query("SELECT * FROM newsentity WHERE id = :id")
+    @Query("SELECT * FROM news WHERE id = :id")
     suspend fun getNewsById(id: Long): NewsEntity?
 }

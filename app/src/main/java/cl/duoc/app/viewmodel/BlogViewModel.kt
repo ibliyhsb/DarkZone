@@ -3,6 +3,7 @@ package cl.duoc.app.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cl.duoc.app.model.data.entities.BlogCreateDto
 import cl.duoc.app.model.data.entities.FormularioBlogsEntity
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import cl.duoc.app.network.ApiClient
@@ -149,7 +150,9 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val fecha = dateFormat.format(Date())
-                val blog = FormularioBlogsEntity(
+                
+                // Crear DTO sin el campo id
+                val blogDto = BlogCreateDto(
                     titulo = currentState.titulo,
                     descripcion = currentState.descripcion,
                     contenido = currentState.contenido,
@@ -158,16 +161,28 @@ class BlogViewModel(private val repo: FormularioBlogsRepository, val usuarioActu
                     esPublicado = true,
                     imagenUri = currentState.imagenUri?.toString()
                 )
+                
                 // 1. Crea en backend
-                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.createBlog(blog) }
+                val response = withContext(Dispatchers.IO) { ApiClient.blogApiService.createBlog(blogDto) }
                 if (response.isSuccessful && response.body() != null) {
                     // 2. Guarda en Room con el id del backend
                     repo.insertarBlog(response.body()!!)
+                    Log.d("BlogViewModel", "Blog guardado en backend Y localmente titulo=${currentState.titulo}")
                 } else {
-                    // Si falla el backend, igual guarda local
-                    repo.insertarBlog(blog)
+                    Log.e("BlogViewModel", "Error del backend: ${response.code()} - ${response.message()}")
+                    // Si falla el backend, crear entidad local
+                    val localBlog = FormularioBlogsEntity(
+                        titulo = currentState.titulo,
+                        descripcion = currentState.descripcion,
+                        contenido = currentState.contenido,
+                        usuarioAutor = usuarioActual,
+                        fechaPublicacion = blogDto.fechaPublicacion,
+                        esPublicado = true,
+                        imagenUri = currentState.imagenUri?.toString()
+                    )
+                    repo.insertarBlog(localBlog)
+                    Log.d("BlogViewModel", "Blog guardado SOLO localmente (backend falló)")
                 }
-                Log.d("BlogViewModel", "Inserted blog (backend+local) titulo=${currentState.titulo}")
                 _blogCreateState.value = BlogCreateState()
             } catch (e: Exception) {
                 e.printStackTrace()

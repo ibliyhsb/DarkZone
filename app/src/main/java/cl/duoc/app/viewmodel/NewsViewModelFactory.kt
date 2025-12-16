@@ -2,17 +2,15 @@ package cl.duoc.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 import cl.duoc.app.model.data.repository.NewsRepository
 
-class StartViewModelFactory(
-    private val blogsRepository: FormularioBlogsRepository,
-    private val newsRepository: NewsRepository
+class NewsViewModelFactory(
+    private val repository: NewsRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(StartViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(NewsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return StartViewModel(blogsRepository, newsRepository) as T
+            return NewsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

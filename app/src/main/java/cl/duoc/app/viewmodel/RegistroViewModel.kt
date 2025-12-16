@@ -73,27 +73,63 @@ class RegistroViewModel(private val registroRepository: FormularioUsuarioReposit
 
         if(errores.tieneErrores()) return
 
+        _estado.update { it.copy(isLoading = true) }
+
         viewModelScope.launch {
-            val entity = FormularioUsuarioEntity(
-                nombreUsuario = ui.nombreUsuario,
-                correoUsuario = ui.correoUsuario,
-                passwordUsuario = ui.passwordUsuario
-            )
-            // Crea en backend
-            val response = withContext(Dispatchers.IO) { ApiClient.userApiService.createUser(entity) }
-            val errorMessage = if (response.isSuccessful && response.body() != null) {
-                registroRepository.guardarFormulario(response.body()!!)
-            } else {
-                registroRepository.guardarFormulario(entity)
-            }
-            if (errorMessage == null) {
-                _estado.update { it.copy(registroExitoso = true) }
-            } else {
-                if (errorMessage.contains("correo")) {
-                    _estado.update { it.copy(errores = it.errores.copy(correoUsuario = errorMessage)) }
-                } else {
-                    _estado.update { it.copy(errores = it.errores.copy(nombreUsuario = errorMessage)) }
+            try {
+                // Crear un map sin el campo id para que el backend genere el ID
+                val userDto = mapOf(
+                    "nombreUsuario" to ui.nombreUsuario,
+                    "correoUsuario" to ui.correoUsuario,
+                    "passwordUsuario" to ui.passwordUsuario
+                )
+                
+                android.util.Log.d("RegistroViewModel", "Intentando conectar al backend...")
+                
+                // Intenta crear en backend
+                val response = withContext(Dispatchers.IO) { 
+                    ApiClient.userApiService.createUser(userDto) 
                 }
+                
+                if (response.isSuccessful && response.body() != null) {
+                    // Backend respondió correctamente - guarda en Room
+                    val errorMessage = registroRepository.guardarFormulario(response.body()!!)
+                    
+                    if (errorMessage == null) {
+                        android.util.Log.d("RegistroViewModel", "Usuario guardado en backend Y base de datos local")
+                        _estado.update { it.copy(
+                            registroExitoso = true, 
+                            isLoading = false,
+                            mensajeExito = "Usuario registrado en servidor y guardado localmente"
+                        )}
+                    } else {
+                        _estado.update { it.copy(isLoading = false) }
+                        if (errorMessage.contains("correo")) {
+                            _estado.update { it.copy(errores = it.errores.copy(correoUsuario = errorMessage)) }
+                        } else {
+                            _estado.update { it.copy(errores = it.errores.copy(nombreUsuario = errorMessage)) }
+                        }
+                    }
+                } else {
+                    // Backend respondió con error
+                    android.util.Log.w("RegistroViewModel", "Backend error: ${response.code()} - ${response.message()}")
+                    _estado.update { it.copy(
+                        isLoading = false,
+                        errores = it.errores.copy(
+                            nombreUsuario = "Error del servidor (código ${response.code()}). Servicios backend no disponibles."
+                        )
+                    )}
+                }
+            } catch (e: Exception) {
+                // Error de red o conexión - NO GUARDAMOS LOCALMENTE
+                android.util.Log.e("RegistroViewModel", "Error de conexión: ${e.message}", e)
+                
+                _estado.update { it.copy(
+                    isLoading = false,
+                    errores = it.errores.copy(
+                        nombreUsuario = "No se puede conectar al servidor. Verifica que los servicios backend estén corriendo en localhost:8083"
+                    )
+                )}
             }
         }
     }

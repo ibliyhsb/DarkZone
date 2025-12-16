@@ -12,13 +12,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.duoc.app.viewmodel.NewsViewModel
 
 @Composable
 fun NewsScreen(viewModel: NewsViewModel, onOpen: (Int) -> Unit) {
-    val articles = viewModel.articles.collectAsState().value
+    val articles by viewModel.news.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -26,10 +27,10 @@ fun NewsScreen(viewModel: NewsViewModel, onOpen: (Int) -> Unit) {
                 Card(modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp)
-                    .clickable { onOpen(article.id) }) {
+                    .clickable { onOpen(article.id.toInt()) }) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(text = article.title, style = MaterialTheme.typography.titleMedium)
-                        Text(text = article.source, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                        Text(text = article.titulo, style = MaterialTheme.typography.titleMedium)
+                        Text(text = article.autor, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }

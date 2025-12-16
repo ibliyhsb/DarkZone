@@ -3,6 +3,7 @@ package cl.duoc.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.app.model.data.repository.FormularioBlogsRepository
+import cl.duoc.app.model.data.repository.NewsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -10,7 +11,10 @@ import kotlinx.coroutines.flow.stateIn
 
 data class Post(val id: Long, val title: String, val author: String)
 
-class StartViewModel(blogsRepository: FormularioBlogsRepository) : ViewModel() {
+class StartViewModel(
+    blogsRepository: FormularioBlogsRepository,
+    newsRepository: NewsRepository
+) : ViewModel() {
 
     val blogs: StateFlow<List<Post>> = blogsRepository.getBlogs()
         .map {
@@ -18,10 +22,9 @@ class StartViewModel(blogsRepository: FormularioBlogsRepository) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val newsViewModel = NewsViewModel()
-    val news: StateFlow<List<Post>> = newsViewModel.articles
+    val news: StateFlow<List<Post>> = newsRepository.getNews()
         .map {
-            it.map { article -> Post(article.id.toLong(), article.title, article.source) }
+            it.map { article -> Post(article.id, article.titulo, article.autor) }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 }

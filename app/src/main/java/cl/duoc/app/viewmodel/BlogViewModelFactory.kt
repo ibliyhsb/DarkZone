@@ -10,6 +10,7 @@ import cl.duoc.app.model.data.repository.FormularioBlogsRepository
 class BlogViewModelFactory(
     owner: SavedStateRegistryOwner,
     private val repository: FormularioBlogsRepository,
+    private val nombreUsuario: String = "usuario_demo",
     defaultArgs: Bundle? = null
 ) : AbstractSavedStateViewModelFactory(owner, defaultArgs) {
 
@@ -19,9 +20,8 @@ class BlogViewModelFactory(
         handle: SavedStateHandle
     ): T {
         if (modelClass.isAssignableFrom(BlogViewModel::class.java)) {
-            val usuario = handle.get<String>("usuarioActual") ?: "usuario_demo"
             @Suppress("UNCHECKED_CAST")
-            return BlogViewModel(repository, usuario) as T
+            return BlogViewModel(repository, nombreUsuario) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -46,7 +46,10 @@ fun FormularioRegistroScreen(onNavigateToLogin: () -> Unit = {}) {
     LaunchedEffect(Unit) {
         viewModel.estado.collectLatest {
             if (it.registroExitoso) {
-                snackbarHostState.showSnackbar("Registro exitoso!")
+                snackbarHostState.showSnackbar(
+                    message = it.mensajeExito.ifEmpty { "Registro exitoso!" },
+                    duration = SnackbarDuration.Long
+                )
                 viewModel.onMensajeExitosoMostrado()
             }
         }
@@ -102,9 +105,16 @@ fun FormularioRegistroScreen(onNavigateToLogin: () -> Unit = {}) {
             Button(
                 onClick = viewModel::onEnviarFormulario,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !estado.errores.tieneErrores()
+                enabled = !estado.errores.tieneErrores() && !estado.isLoading
             ) {
-                Text("Registrarse")
+                if (estado.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.height(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Registrarse")
+                }
             }
 
             TextButton(onClick = onNavigateToLogin) {

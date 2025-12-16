@@ -23,10 +23,10 @@ private data class UiPost(val id: Long, val title: String, val author: String)
 @Composable
 fun StartScreen(blogViewModel: BlogViewModel, newsViewModel: NewsViewModel) {
     val blogs by blogViewModel.blogs.collectAsState()
-    val news by newsViewModel.articles.collectAsState()
+    val news by newsViewModel.news.collectAsState()
 
     val blogPosts = blogs.map { UiPost(it.id, it.titulo, it.usuarioAutor) }
-    val newsPosts = news.map { UiPost(it.id.toLong(), it.title, it.source) }
+    val newsPosts = news.map { UiPost(it.id, it.titulo, it.autor) }
 
     Column(Modifier.fillMaxSize()) {
         // Banner
