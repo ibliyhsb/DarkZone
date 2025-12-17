@@ -2,7 +2,8 @@ package cl.duoc.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
+import cl.duoc.app.network.ApiClient
+import cl.duoc.app.network.UserApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,7 +17,7 @@ data class LoginUiState(
     val error: String? = null
 )
 
-class LoginViewModel(private val repository: FormularioUsuarioRepository) : ViewModel() {
+class LoginViewModel(private val userApiService: UserApiService = ApiClient.userApiService) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state = _state.asStateFlow()
@@ -32,14 +33,21 @@ class LoginViewModel(private val repository: FormularioUsuarioRepository) : View
     fun login() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            val user = state.value.user
-            val pass = state.value.pass
-            val usuario = repository.findByUsernameAndPassword(user, pass)
+            try {
+                val user = state.value.user
+                val pass = state.value.pass
+                val credentials = mapOf("username" to user, "password" to pass)
+                val response = userApiService.login(credentials)
 
-            if (usuario != null) {
-                _state.update { it.copy(sesionActiva = true, error = null, isLoading = false) }
-            } else {
-                _state.update { it.copy(error = "Usuario o contraseña incorrectos", isLoading = false) }
+                if (response.isSuccessful && response.body() != null) {
+                    // Aquí puedes manejar la sesión del usuario, por ejemplo, guardando un token
+                    _state.update { it.copy(sesionActiva = true, error = null, isLoading = false) }
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Usuario o contraseña incorrectos"
+                    _state.update { it.copy(error = errorBody, isLoading = false) }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = "Error de conexión: ${e.message}", isLoading = false) }
             }
         }
     }

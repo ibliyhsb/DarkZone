@@ -14,6 +14,9 @@ interface UserApiService {
     @POST("users")
     suspend fun createUser(@Body user: Map<String, String>): Response<FormularioUsuarioEntity>
 
+    @POST("users/login")
+    suspend fun login(@Body credentials: Map<String, String>): Response<FormularioUsuarioEntity>
+
     @PUT("users/{id}")
     suspend fun updateUser(@Path("id") id: Long, @Body user: FormularioUsuarioEntity): Response<FormularioUsuarioEntity>
 

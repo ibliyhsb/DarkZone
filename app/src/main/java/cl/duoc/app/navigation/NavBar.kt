@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.rememberCoroutineScope
-import cl.duoc.app.model.data.repository.FormularioUsuarioRepository
 import cl.duoc.app.model.data.repository.NewsRepository
 import cl.duoc.app.viewmodel.LoginViewModel
 import cl.duoc.app.viewmodel.LoginViewModelFactory
@@ -57,10 +56,7 @@ fun NavBar() {
 
     NavHost(navController = nav, startDestination = Routes.LOGIN) {
         composable(Routes.LOGIN) {
-            val context = LocalContext.current
-            val db = remember(context) { AppDatabase.getDatabase(context) }
-            val repo = remember(db) { FormularioUsuarioRepository(db.formularioUsuarioDao()) }
-            val loginFactory = remember(repo) { LoginViewModelFactory(repo) }
+            val loginFactory = remember { LoginViewModelFactory() }
             val loginVm: LoginViewModel = viewModel(factory = loginFactory)
 
             LoginScreen(

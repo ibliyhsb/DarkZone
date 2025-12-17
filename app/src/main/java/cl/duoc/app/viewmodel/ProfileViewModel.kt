@@ -66,6 +66,7 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
 
     fun guardarCambios() {
         viewModelScope.launch {
+            _state.update { it.copy(error = null) } // Limpiar errores previos
             try {
                 val currentState = _state.value
                 val user = FormularioUsuarioEntity(
@@ -76,17 +77,22 @@ class ProfileViewModel(private val repository: FormularioUsuarioRepository, priv
                 )
                 // Actualiza en backend
                 val response = withContext(Dispatchers.IO) { ApiClient.userApiService.updateUser(user.id, user) }
+
                 if (response.isSuccessful && response.body() != null) {
+                    // Si el backend actualizó, actualizar el repositorio local y notificar éxito
                     repository.updateUser(response.body()!!)
+                    _state.update { it.copy(updateSuccess = true) }
                 } else {
-                    repository.updateUser(user)
+                    // Si el backend falló, mostrar el error
+                    val errorBody = response.errorBody()?.string() ?: "Error desconocido al actualizar."
+                    _state.update { it.copy(error = errorBody) }
                 }
-                _state.update { it.copy(updateSuccess = true) }
             } catch (e: Exception) {
+                // Capturar errores de conexión u otros
                 val errorMessage = when {
                     e.message?.contains("UNIQUE constraint failed: formulario_usuario.nombre_usuario") == true -> "El nombre de usuario ya está en uso."
                     e.message?.contains("UNIQUE constraint failed: formulario_usuario.correo_usuario") == true -> "El correo electrónico ya está en uso."
-                    else -> "Error al actualizar el perfil."
+                    else -> "Error de conexión: ${e.message}"
                 }
                 _state.update { it.copy(error = errorMessage) }
             }

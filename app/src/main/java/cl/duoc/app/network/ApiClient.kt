@@ -11,7 +11,7 @@ object ApiClient {
     // - EMULADOR Android Studio: usa "10.0.2.2"
     // - DISPOSITIVO FÍSICO: usa la IP de tu PC (ejecuta: ipconfig)
     //   Ejemplo: "192.168.1.100" o "192.168.43.1" o "10.0.0.5"
-    private const val HOST_IP = "192.168.1.112"  // 
+    private const val HOST_IP = "192.168.1.7"  //
     // URLs de los BFF (Backend for Frontend)
     private const val USERS_BASE_URL = "http://$HOST_IP:8083/bff/"
     private const val NEWS_BASE_URL = "http://$HOST_IP:8183/bff/"
