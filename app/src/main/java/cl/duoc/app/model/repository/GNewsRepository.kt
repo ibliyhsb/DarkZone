@@ -17,7 +17,7 @@ class GNewsRepository(private val apiKey: String) {
     }
 
     fun getTerrorNews(callback: (GNewsResponse?) -> Unit) {
-        val call = apiService.getTerrorNews(token = apiKey)
+        val call = apiService.getTerrorNews(apikey = apiKey)
         call.enqueue(object : retrofit2.Callback<GNewsResponse> {
             override fun onResponse(
                 call: retrofit2.Call<GNewsResponse>,

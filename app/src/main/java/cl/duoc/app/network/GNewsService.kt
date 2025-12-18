@@ -25,6 +25,6 @@ interface GNewsService {
     fun getTerrorNews(
         @Query("q") query: String = "terror",
         @Query("lang") lang: String = "es",
-        @Query("token") token: String
+        @Query("apikey") apikey: String
     ): Call<GNewsResponse>
 }

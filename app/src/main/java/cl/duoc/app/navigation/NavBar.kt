@@ -154,13 +154,6 @@ fun NavBar() {
                 }
             }
                 composable(Routes.NEWS) {
-                    val context = LocalContext.current
-                    val db = remember(context) { AppDatabase.getDatabase(context) }
-                    val newsRepo = remember(db) { NewsRepository(db.newsDao()) }
-                    val newsFactory = remember(newsRepo) { NewsViewModelFactory(newsRepo) }
-                    
-                    val newsEntry = remember(nav.getBackStackEntry("main_shell/{nombreUsuario}")) { nav.getBackStackEntry("main_shell/{nombreUsuario}") }
-                    val newsVm: NewsViewModel = viewModel(viewModelStoreOwner = newsEntry, factory = newsFactory)
                 DrawerScaffold(
                     currentRoute = Routes.NEWS,
                     onNavigate = { route -> nav.navigate(route) },
@@ -168,7 +161,7 @@ fun NavBar() {
                     scope = scope,
                     navController = nav
                 ) {
-                    NewsScreen(viewModel = newsVm, onOpen = {})
+                    NewsScreen()
                 }
             }
         }
